@@ -11,4 +11,4 @@
   - fail2ban
   - git-core
   - redis-server
-  - lets-encrypt
+  - letsencrypt

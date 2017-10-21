@@ -3,13 +3,57 @@
   vars_files:
     - vars.yml
   remote_user: "{{ remote_sudo_user }}"
+  become: true
   roles:
-   - { role: common, tags: [init] }
-   - { role: user, tags: [init] }
-   - { role: ssh, tags: [init] }
-   - { role: nginx, tags: [init, web] }
-   - { role: php, tags: [init] }
-   - { role: mariadb, tags: [init] }
-   - { role: wp-cli, tags: [init] }
-   - { role: wordpress, tags: [init, web] }
-   - { role: letsencrypt, tags: [init, web, ssl] }
+   -
+    role: common
+    tags: [init]
+   -
+    role: user
+    tags: [init]
+   -
+    role: ssh
+    tags: [init]
+   -
+    role: nginx
+    tags: [init, web, production]
+    domain: "{{ main_domain }}"
+   -
+    role: nginx
+    tags: [init, web, staging]
+    domain: "{{ staging_domain }}"
+   -
+    role: php
+    tags: [init]
+   -
+    role: mariadb
+    tags: [init]
+   -
+    role: wp-cli
+    tags: [init]
+   -
+    role: wordpress
+    tags: [init, web, production]
+    domain: "{{ main_domain }}"
+    wpuser: "{{ main_wp_admin_user }}"
+    wppass: "{{ main_wp_pass }}"
+    wpemail: "{{ main_wp_admin_email }}"
+    wpdbname: "{{ main_wp_db_name }}"
+    wpsitetitle: "{{ main_wp_site_title }}"
+   -
+    role: wordpress
+    tags: [init, web, staging]
+    domain: "{{ staging_domain }}"
+    wpuser: "{{ staging_wp_admin_user }}"
+    wppass: "{{ staging_wp_pass }}"
+    wpemail: "{{ staging_wp_email }}"
+    wpdbname: "{{ staging_wp_db_name }}"
+    wpsitetitle: "{{ staging_wp_site_title }}"
+   -
+    role: letsencrypt
+    tags: [init, web, ssl, production]
+    domain: "{{ main_domain }}"
+   -
+    role: letsencrypt
+    tags: [init, web, ssl, staging]
+    domain: "{{ staging_domain }}"

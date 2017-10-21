@@ -1,7 +1,7 @@
 ---
 - name: Ensure web group is present
   group:
-    name: web
+    name: "{{ remote_web_user }}"
     state: present
 
 - name: Create web user
@@ -15,5 +15,5 @@
 
 - name: Add authorized key
   authorized_key:
-    user: "web"
-    key: "{{ lookup('file', public_key) }}"
+    user: "{{ remote_web_user }}"
+    key: "{{ web_user_ssh_public_key }}"

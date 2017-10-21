@@ -1,118 +1,51 @@
 ---
 - block:
-  - name: Creates directory for production web files
+  - name: Creates directory for domain web files
     file:
-      path: '/home/{{ remote_web_user }}/www/{{ main_domain }}'
+      path: '/home/{{ remote_web_user }}/www/{{ domain }}'
       state: directory
     tags:
       - production
 
-  - name: Create logs directory (production)
+  - name: Create logs directory
     file:
-      path: '/home/{{ remote_web_user }}/www/{{ main_domain }}/logs'
+      path: '/home/{{ remote_web_user }}/www/{{ domain }}/logs'
       state: directory
     tags:
       - production
 
-  - name: Creates directory for staging web files
-    file:
-      path: '/home/{{ remote_web_user }}/www/{{ staging_domain }}'
-      state: directory
-    tags:
-      - staging
-
-  - name: Create logs directory (staging)
-    file:
-      path: '/home/{{ remote_web_user }}/www/{{ staging_domain }}/logs'
-      state: directory
-    tags:
-      - staging
-
-  - name: Generate random password for production db user
+  - name: Generate random password for wp db user
     command: php -r "echo md5(random_bytes(10));"
-    register: production_db_pass
-    tags:
-      - production
+    register: db_pass
 
-  - name: Generate random password for staging db user
-    command: php -r "echo md5(random_bytes(10));"
-    register: staging_db_pass
-    tags:
-      - staging
-
-  - name: Create Production WordPress database
+  - name: Create WordPress database
     mysql_db:
-      name: '{{ main_wp_db_name }}'
+      name: '{{ wpdbname }}'
       state: present
-    tags:
-      - production
 
-  - name: Create Staging WordPress database
-    mysql_db:
-      name: '{{ staging_wp_db_name }}'
-      state: present
-    tags:
-      - staging
-
-  - name: Create Production WordPress database user
+  - name: Create WordPress database user
     mysql_user:
-      name: '{{ main_wp_db_name }}'
-      password: '{{ production_db_pass.stdout }}'
-      priv: "{{ main_wp_db_name }}.*:ALL host='localhost'"
+      name: '{{ wpdbname }}'
+      password: '{{ dbpass.stdout }}'
+      priv: "{{ wpdbname }}.*:ALL host='localhost'"
       state: present
-    tags:
-      - production
 
-  - name: Create Staging WordPress database user
-    mysql_user:
-      name: '{{ staging_wp_db_name }}'
-      password: '{{ staging_db_pass.stdout }}'
-      priv: "{{ staging_wp_db_name }}.*:ALL host='localhost'"
-      state: present
-    tags:
-      - staging
+  # installing WordPress via wp-cli
 
-  #installing WordPress via wp-cli
-  - name: Download WordPress to production directory via wp-cli
+  - name: Download WordPress to domain directory via wp-cli
     command: wp core download
     args:
-      chdir: '/home/{{ remote_web_user }}/www/{{ main_domain }}'
-    tags:
-      - production
+      chdir: '/home/{{ remote_web_user }}/www/{{ domain }}'
 
-  - name: Setup WordPress Config for production using wp-cli
-    command: wp config create --dbname={{ main_wp_db_name|quote }} --dbuser={{ main_wp_db_name|quote }} --dbpass={{production_db_pass.stdout}}
+  - name: Setup WordPress Config using wp-cli
+    command: wp config create --dbname={{ wpdbname|quote }} --dbuser={{ wpdbname|quote }} --dbpass={{db_pass.stdout|quote}}
     args:
-      chdir: '/home/{{ remote_web_user }}/www/{{ main_domain }}'
-    tags:
-      - production
+      chdir: '/home/{{ remote_web_user }}/www/{{ domain }}'
 
-  - name: Install WordPress using wp-cli (production)
-    command: wp core install --url={{ main_domain|quote }} --title={{ main_wp_site_title|quote }} --admin_user={{ main_wp_admin_user|quote }} --admin_password={{ main_wp_pass|quote }} --admin_email={{ main_wp_email }}
+  - name: Install WordPress using wp-cli
+    command: wp core install --url={{ domain|quote }} --title={{ wpsitetitle|quote }} --admin_user={{ wpuser|quote }} --admin_password={{ wppass|quote }} --admin_email={{ wpemail|quote }}
     args:
-      chdir: '/home/{{ remote_web_user }}/www/{{ main_domain}}'
-    tags:
-      - production
+      chdir: '/home/{{ remote_web_user }}/www/{{ domain }}'
 
-  - name: Download WordPress to staging directory via wp-cli
-    command: wp core download
-    args:
-      chdir: '/home/{{ remote_web_user }}/www/{{ staging_domain }}'
-    tags:
-      - staging
-
-  - name: Setup WordPress Config for staging using wp-cli
-    command: wp config create --dbname={{ staging_wp_db_name|quote }} --dbuser={{ staging_wp_db_name|quote }} --dbpass={{staging_db_pass.stdout}}
-    args:
-      chdir: '/home/{{ remote_web_user }}/www/{{ staging_domain }}'
-    tags:
-      - staging
-
-  - name: Install WordPress using wp-cli (staging)
-    command: wp core install --url={{ staging_domain|quote }} --title={{ staging_wp_site_title|quote }} --admin_user={{ staging_wp_admin_user|quote }} --admin_password={{ staging_wp_pass|quote }} --admin_email={{ main_wp_email }}
-    args:
-      chdir: '/home/{{ remote_web_user }}/www/{{ staging_domain}}'
-    tags:
-      - staging
   become: yes
   become_user: "{{ remote_web_user }}"

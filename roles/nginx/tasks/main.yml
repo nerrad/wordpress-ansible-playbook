@@ -22,7 +22,7 @@
 
 - name: Clone Nginx configs
   git:
-    repo: "{{ nginx_config_repo_address }}"
+    repo: "{{ nginx_config_repo }}"
     dest: /etc/nginx
     version: "{{ nginx_config_repo_version }}"
     force: yes
@@ -36,74 +36,57 @@
     state: present
   notify: restart nginx
 
-- name: Copy ssl.com to a production and staging conf (same name)
+- name: Copy ssl.com configuration to new domain based configuration.
   copy:
     src: /etc/nginx/sites-available/ssl.com
-    dest: "/etc/nginx/sites-available/{{ item }}.conf"
+    dest: "/etc/nginx/sites-available/{{ domain }}.conf"
     force: no
-  with_items:
-    - "{{ main_domain }}"
-    - "{{ staging_domain }}"
 
-- name: Remove www redirect in staging conf
+- name: Remove www redirect in staging configuration
   replace:
-    path: "/etc/nginx/sites-available/{{ staging_domain }}.conf"
+    path: "/etc/nginx/sites-available/{{ domain }}.conf"
     regexp: '# Redirect www to non-www[\s\w\d\W]+'
     replace: ''
-  tags:
-    - staging
+  when: domain == staging_domain
 
 - name: Remove www domain from server name item in staging conf
   replace:
     path: "/etc/nginx/sites-available/{{ staging_domain }}.conf"
     regexp: 'www\.ssl\.com'
     replace: ''
-  tags:
-    - staging
+  when: domain == staging_domain
 
-- name: Replace ssl.com in configuration files with the relevant domain'
+- name: Replace ssl.com in configuration files with the relevant domain
   replace:
-    path: "/etc/nginx/sites-available/{{ item }}.conf"
+    path: "/etc/nginx/sites-available/{{ domain }}.conf"
     regexp: 'sss\.com'
-    replace: '{{ item }}'
-  with_items:
-    - "{{ main_domain }}"
-    - "{{ staging_domain }}"
+    replace: '{{ domain }}'
 
-- name: Modify root path directive for all configurations
+- name: Modify root path directive configuration.
   lineinfile:
-    dest: "/etc/nginx/sites-available/{{ item }}.conf"
+    dest: "/etc/nginx/sites-available/{{ domain }}.conf"
     regexp: "^root"
-    line: "root /home/{{ remote_web_user }}/www/{{ item }};"
+    line: "root /home/{{ remote_web_user }}/www/{{ domain }};"
     state: present
-  with_items:
-    - "{{ main_domain }}"
-    - "{{ staging_domain }}"
 
-- name: Modify access_log path directive for all configurations
+- name: Modify access_log path directive for configuration.
   lineinfile:
-    dest: "/etc/nginx/sites-available/{{ item }}.conf"
+    dest: "/etc/nginx/sites-available/{{ domain }}.conf"
     regexp: "access_log"
-    line: "access_log /home/{{ remote_web_user }}/www/{{ item }}/logs/access.log;"
+    line: "access_log /home/{{ remote_web_user }}/www/{{ domain }}/logs/access.log;"
     state: present
-  with_items:
-    - "{{ main_domain }}"
-    - "{{ staging_domain }}"
 
-- name: Modify error_log path directive for all configurations
+- name: Modify error_log path directive for all domain
   lineinfile:
-    dest: "/etc/nginx/sites-available/{{ item }}.conf"
+    dest: "/etc/nginx/sites-available/{{ domain }}.conf"
     regexp: "error_log"
-    line: "error_log /home/{{ remote_web_user }}/www/{{ item }}/logs/error.log;"
+    line: "error_log /home/{{ remote_web_user }}/www/{{ domain }}/logs/error.log;"
     state: present
-  with_items:
-    - "{{ main_domain }}"
-    - "{{ staging_domain }}"
 
 - name: Generate dhparams
   shell: openssl dhparam -out /etc/ssl/dhparams.pem 2048
   args:
-    creates: /etc/ssl/dhparams.
+    creates: /etc/ssl/dhparams.pem
 
 - name: Uncomment ssl_dhparam line in configuration
   lineinfile:
@@ -118,18 +101,9 @@
     dest: "/etc/nginx/sites-enabled/default"
     state: link
 
-- name: Symlink production
+- name: Symlink domain
   file:
-    src: "/etc/nginx/sites-available/{{ main_domain }}"
-    dest: "/etc/nginx/sites-enabled/{{ main_domain }}"
+    src: "/etc/nginx/sites-available/{{ domain }}"
+    dest: "/etc/nginx/sites-enabled/{{ domain }}"
     state: link
-  tags:
-    - production
-
-- name: Symlink staging
-  file:
-    src: "/etc/nginx/sites-available/{{ staging_domain }}"
-    dest: "/etc/nginx/sites-enabled/{{ staging_domain }}"
-    state: link
-  tags:
-    - staging
+  notify: restart nginx
