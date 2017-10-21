@@ -1,0 +1,36 @@
+---
+- name: Reload nginx to activate our sites
+  notify: restart nginx
+
+- name: Create letsencrypt certificate for production
+  shell: letsencrypt certonly -n --webroot -w /var/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ main_domain }}
+  args:
+    creates: /etc/letsencrypt/live/{{ main_domain }}
+  tags:
+    - production
+
+- name: Create letsencrypt certificate for staging
+  shell: letsencrypt certonly -n --webroot -w /var/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ staging_domain }}
+  args:
+    creates: /etc/letsencrypt/live/{{ staging_domain }}
+  tags:
+    - staging
+
+- name: Reload nginx to activate our sites with ssl
+  notify: restart nginx
+
+- name: Add letsencrypt cronjob for cert renewal (production)
+  cron:
+    name: letsencrypt_renewal
+    special_time: weekly
+    job: letsencrypt --renew certonly -n --webroot -w /var/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ main_domain }} && service nginx reload
+  tags:
+    - production
+
+- name: Add letsencrypt cronjob for cert renewal (staging)
+  cron:
+    name: letsencrypt_renewal
+    special_time: weekly
+    job: letsencrypt --renew certonly -n --webroot -w /var/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ staging_domain }} && service nginx reload
+  tags:
+    - staging
