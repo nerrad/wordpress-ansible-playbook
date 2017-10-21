@@ -4,6 +4,7 @@
     - vars.yml
   remote_user: "{{ remote_sudo_user }}"
   become: true
+  ignore_errors: "{{ ansible_check_mode }}"
   roles:
    -
     role: common
