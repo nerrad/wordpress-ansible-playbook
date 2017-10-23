@@ -1,4 +1,5 @@
 ---
+## this only sets up non ssl.  The letsencrypt role will setup ssl.
 - name: Add Nginx repo
   apt_repository:
     repo: ppa:nginx/development
@@ -36,52 +37,95 @@
     state: present
   notify: restart nginx
 
-- name: Copy ssl.com configuration to new domain based configuration.
+- name: Copy non-ssl and ssl configuration to new domain based configuration.
   copy:
-    src: /etc/nginx/sites-available/ssl.com
-    dest: "/etc/nginx/sites-available/{{ domain }}.conf"
+    remote_src: yes
+    src: /etc/nginx/sites-available/{{ item.src }}
+    dest: /etc/nginx/sites-available/{{ item.dest }}
     force: no
+  with_items:
+    -
+      src: singlesite.com
+      dest: "{{ domain }}.nonssl.conf"
+    -
+      src: ssl.com
+      dest: "{{ domain }}.ssl.conf"
 
 - name: Remove www redirect in staging configuration
   replace:
-    path: "/etc/nginx/sites-available/{{ domain }}.conf"
+    path: /etc/nginx/sites-available/{{ item }}
     regexp: '# Redirect www to non-www[\s\w\d\W]+'
     replace: ''
   when: domain == staging_domain
+  with_items:
+    - "{{ domain }}.nonssl.conf"
+    - "{{ domain }}.ssl.conf"
 
 - name: Remove www domain from server name item in staging conf
   replace:
-    path: "/etc/nginx/sites-available/{{ staging_domain }}.conf"
-    regexp: 'www\.ssl\.com'
+    path: "/etc/nginx/sites-available/{{ item.filename }}"
+    regexp: "{{ item.regexp }}"
     replace: ''
   when: domain == staging_domain
-
-- name: Replace ssl.com in configuration files with the relevant domain
-  replace:
-    path: "/etc/nginx/sites-available/{{ domain }}.conf"
-    regexp: 'sss\.com'
-    replace: '{{ domain }}'
+  with_items:
+    -
+      filename: "{{ domain }}.nonssl.conf"
+      regexp: ' www\.singlesite\.com'
+    -
+      filename: "{{ domain }}.ssl.conf"
+      regexp: ' www\.ssl\.com'
 
 - name: Modify root path directive configuration.
-  lineinfile:
-    dest: "/etc/nginx/sites-available/{{ domain }}.conf"
-    regexp: "^root"
-    line: "root /home/{{ remote_web_user }}/www/{{ domain }};"
-    state: present
+  replace:
+    dest: "/etc/nginx/sites-available/{{ item.filename }}"
+    regexp: "{{ item.regexp }}"
+    replace: '\1/home/{{ remote_web_user }}/www/{{ domain }}\2'
+  with_items:
+    -
+      filename: "{{ domain }}.nonssl.conf"
+      regexp: '(\s)\/sites\/singlesite\.com\/public(;)?$'
+    -
+      filename: "{{ domain }}.ssl.conf"
+      regexp: '(\s)\/sites\/ssl\.com\/public(;)?$'
+
+- name: Replace template domain in configuration files with the actual domain
+  replace:
+    path: "/etc/nginx/sites-available/{{ item.filename }}"
+    regexp: "{{ item.regexp }}"
+    replace: '\1{{ domain }}\2'
+  with_items:
+    -
+      filename: "{{ domain }}.nonssl.conf"
+      regexp: '(\s+|/|\.)singlesite\.com(\s|/|\$|;)'
+    -
+      filename: "{{ domain }}.ssl.conf"
+      regexp: '(\s+|/|\.)ssl\.com(\s|/|\$|;)'
+
+- name: Modify lets encrypt to point to its own folder for authorization
+  replace:
+    path: /etc/nginx/sites-available/{{ domain }}.nonssl.conf
+    regexp: '(\s)\/sites\/letsencrypt\/public(;)?$'
+    replace: '\1/home/{{ remote_web_user }}/www/letsencrypt\2'
 
 - name: Modify access_log path directive for configuration.
   lineinfile:
-    dest: "/etc/nginx/sites-available/{{ domain }}.conf"
+    dest: "/etc/nginx/sites-available/{{ item }}"
     regexp: "access_log"
     line: "access_log /home/{{ remote_web_user }}/www/{{ domain }}/logs/access.log;"
     state: present
+  with_items:
+    - "{{ domain }}.nonssl.conf"
+    - "{{ domain }}.ssl.conf"
 
 - name: Modify error_log path directive for all domain
   lineinfile:
-    dest: "/etc/nginx/sites-available/{{ domain }}.conf"
+    dest: "/etc/nginx/sites-available/{{ item }}"
     regexp: "error_log"
     line: "error_log /home/{{ remote_web_user }}/www/{{ domain }}/logs/error.log;"
     state: present
+  with_items:
+    - "{{ domain }}.nonssl.conf"
+    - "{{ domain }}.ssl.conf"
 
 - name: Generate dhparams
   shell: openssl dhparam -out /etc/ssl/dhparams.pem 2048
@@ -93,6 +137,7 @@
     dest: /etc/nginx/global/server/ssl.conf
     regexp: "^# ssl_dhparam"
     line: "ssl_dhparam /etc/ssl/dhparams.pem;"
+    backrefs: yes
     state: present
 
 - name: Symlink default catchall
@@ -101,9 +146,9 @@
     dest: "/etc/nginx/sites-enabled/default"
     state: link
 
-- name: Symlink domain
+- name: Symlink non ssl domain (ssl domain symlink happens in letsencrypt role)
   file:
-    src: "/etc/nginx/sites-available/{{ domain }}"
-    dest: "/etc/nginx/sites-enabled/{{ domain }}"
+    src: "/etc/nginx/sites-available/{{ domain }}.nonssl.conf"
+    dest: "/etc/nginx/sites-enabled/{{ domain }}.nonssl.conf"
     state: link
   notify: restart nginx

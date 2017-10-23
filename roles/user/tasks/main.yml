@@ -7,7 +7,7 @@
 - name: Create web user
   user:
     name: "{{ remote_web_user }}"
-    groups: "{{ remote_web_user }}"
+    group: "{{ remote_web_user }}"
     password: "{{ remote_web_user_password }}"
     shell: /bin/bash
     update_password: always

@@ -5,7 +5,6 @@ remote_sudo_user: ubuntu
 remote_web_user: web
 remote_web_user_password: "Enter a password to use for the remote web user (must be encrypted, see http://docs.ansible.com/ansible/latest/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)"
 web_user_ssh_public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
-mysql_root_password: "Enter a password to use for the mysql root user"
 nginx_config_repo: https://github.com/A5hleyRich/wordpress-nginx.git
 nginx_config_repo_version: master
 main_wp_admin_user: production_admin

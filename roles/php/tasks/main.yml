@@ -24,7 +24,6 @@
     - php7.1-xml
     - php7.1-xmlrpc
     - php7.1-zip
-    - php-redis
 
 - name: Set PHP user
   lineinfile:

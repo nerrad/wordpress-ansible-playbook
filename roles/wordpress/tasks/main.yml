@@ -1,4 +1,22 @@
 ---
+- name: Generate random password for wp db user
+  command: php -r "echo md5(random_bytes(10));"
+  register: db_pass
+
+- name: Create WordPress database
+  mysql_db:
+    name: '{{ wpdbname }}'
+    state: present
+
+- name: Create WordPress database user
+  mysql_user:
+    name: '{{ wpdbname }}'
+    password: '{{ db_pass.stdout }}'
+    priv: "{{ wpdbname }}.*:ALL"
+    host: localhost
+    state: present
+    update_password: on_create
+
 - block:
   - name: Creates directory for domain web files
     file:
@@ -14,38 +32,40 @@
     tags:
       - production
 
-  - name: Generate random password for wp db user
-    command: php -r "echo md5(random_bytes(10));"
-    register: db_pass
-
-  - name: Create WordPress database
-    mysql_db:
-      name: '{{ wpdbname }}'
-      state: present
-
-  - name: Create WordPress database user
-    mysql_user:
-      name: '{{ wpdbname }}'
-      password: '{{ dbpass.stdout }}'
-      priv: "{{ wpdbname }}.*:ALL host='localhost'"
-      state: present
-
   # installing WordPress via wp-cli
+
+  - name: Is WordPress already downloaded
+    stat: path=/home/{{ remote_web_user }}/www/{{ domain }}/wp-load.php
+    register: wp_downloaded
 
   - name: Download WordPress to domain directory via wp-cli
     command: wp core download
     args:
       chdir: '/home/{{ remote_web_user }}/www/{{ domain }}'
+    when: not wp_downloaded.stat.exists
+
+  - name: Is WordPress config already setup
+    stat: path=/home/{{ remote_web_user }}//www/{{ domain }}/wp-config.php
+    register: wp_configured
 
   - name: Setup WordPress Config using wp-cli
     command: wp config create --dbname={{ wpdbname|quote }} --dbuser={{ wpdbname|quote }} --dbpass={{db_pass.stdout|quote}}
     args:
       chdir: '/home/{{ remote_web_user }}/www/{{ domain }}'
+    when: not wp_configured.stat.exists
+
+  - name: Is WordPress already installed
+    command: wp core is-installed
+    args:
+      chdir: '/home/{{ remote_web_user }}/www/{{ domain }}'
+    register: wp_installed
+    failed_when: "'Error:' in wp_installed.stderr"
 
   - name: Install WordPress using wp-cli
     command: wp core install --url={{ domain|quote }} --title={{ wpsitetitle|quote }} --admin_user={{ wpuser|quote }} --admin_password={{ wppass|quote }} --admin_email={{ wpemail|quote }}
     args:
       chdir: '/home/{{ remote_web_user }}/www/{{ domain }}'
+    when: wp_installed != 1
 
-  become: yes
+  become: true
   become_user: "{{ remote_web_user }}"

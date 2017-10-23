@@ -1,13 +1,29 @@
 ---
+- name: create letsencrypt directory
+  file:
+    name: /home/{{ remote_web_user }}/www/letsencrypt
+    state: directory
+
 - name: Create letsencrypt certificate
-  shell: letsencrypt certonly -n --webroot -w /var/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain }}
+  shell: letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain }}
   args:
     creates: /etc/letsencrypt/live/{{ domain }}
-  notify:
-    retstart nginx
+  notify: restart nginx
+
+- name: Remove symlink for non ssl site.
+  file:
+    path: /etc/nginx/sites-enabled/{{ domain }}.nonssl.conf
+    state: absent
+
+- name: Symlink ssl domain
+  file:
+    src: /etc/nginx/sites-available/{{ domain }}.ssl.conf
+    dest: /etc/nginx/sites-enabled/{{ domain }}.ssl.conf
+    state: link
+  notify: restart nginx
 
 - name: Add letsencrypt cronjob for cert renewal
   cron:
     name: letsencrypt_renewal
     special_time: weekly
-    job: letsencrypt --renew certonly -n --webroot -w /var/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain }} && service nginx reload
+    job: letsencrypt --renew certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain }} && service nginx reload
