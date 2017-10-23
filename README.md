@@ -125,6 +125,8 @@ The following structure is used for the WordPress sites created:
        
 ```
 
+Note: the `letsencrypt` folder is not a WordPress site.  It is only accessible on requests to the `/.well-known/acme-challenge` route for any of your WordPress domains.  It's used by the letsencrypt service to authenticate your ssl certificate setup.
+
 ## Credits
 
 Inspired by the playbooks, [WordPress Ansible](https://github.com/A5hleyRich/wordpress-ansible) and [WordPress Ansible Playbook](https://github.com/tlovett1/wordpress-ansible-playbook/tree/f4a5fd158b346aac830c72744a10b26807c53496)
