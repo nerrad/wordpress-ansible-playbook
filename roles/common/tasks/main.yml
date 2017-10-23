@@ -10,5 +10,7 @@
   with_items:
   - fail2ban
   - git-core
-  - redis-server
   - letsencrypt
+  - unzip
+  - python-pip
+  - python-dev
