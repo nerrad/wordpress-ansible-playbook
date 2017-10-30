@@ -51,6 +51,16 @@
     wpdbname: "{{ staging_wp_db_name }}"
     wpsitetitle: "{{ staging_wp_site_title }}"
    -
+    role: importdb
+    tags: [web, staging, wordpress, import]
+    domain: "{{ staging_domain }}"
+    import_item: "{{ wp_db_import.staging }}"
+   -
+    role: importdb
+    tags: [web, production, wordpress, import]
+    domain: "{{ main_domain }}"
+    import_item: "{{ wp_db_import.main }}"
+   -
     role: letsencrypt
     tags: [web, ssl, production]
     domain: "{{ main_domain }}"

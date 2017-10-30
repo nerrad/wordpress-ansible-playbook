@@ -19,3 +19,32 @@ main_wp_site_title: Production Site
 staging_wp_site_title: Staging Site
 letsencrypt_email: someemail@example.org
 
+# database import paths.  Include the path to your sql import if you want to import.
+# by default these are not defined. Uncomment and fill with the the correct path to your local import file that will
+# be copied over to the source.
+
+# search_replace_path is the path to the WordPress installation where the db was exported from.  It will be replaced
+# with the path for the domain the db is being imported to.
+
+# search_replace_domain is the domain in the db file for the old WordPress installation that will get replaced with the
+# domain for the new installation. If the db import is already correct for the domain either don't set the variable or
+# have it as the same as what is defined for the domain on the host.  Include the scheme (https:// or http://)
+
+# ssl is for whether the new domain should be ssl or not (https:// or http://).  It will depend on whether you've setup
+# the new site with lets encrypt cert or not (defualt true).
+
+# db_prefix is for if the table you are importing is using an non-standard db prefix.
+
+#wp_db_import:
+#  staging:
+#    path: "{{ playbook_dir }}/dbimports/import.sql"
+#    search_replace_path: /path/for/db/exported/from
+#    search_replace_domain: olddomain.com
+#    ssl: true
+#    db_prefix: wp_
+#  main:
+#    path: "{{ playbook_dir }}/dbimports/import.sql"
+#    search_replace_path: /path/for/db/exported/from
+#    search_replace_domain: olddomain.com
+#    ssl: true
+#    db_prefix: wp_
