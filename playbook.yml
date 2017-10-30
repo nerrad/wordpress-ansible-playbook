@@ -34,7 +34,7 @@
     tags: [init]
    -
     role: wordpress
-    tags: [init, web, production, wordpress]
+    tags: [web, production, wordpress]
     domain: "{{ main_domain }}"
     wpuser: "{{ main_wp_admin_user }}"
     wppass: "{{ main_wp_pass }}"
@@ -43,7 +43,7 @@
     wpsitetitle: "{{ main_wp_site_title }}"
    -
     role: wordpress
-    tags: [init, web, staging, wordpress]
+    tags: [web, staging, wordpress]
     domain: "{{ staging_domain }}"
     wpuser: "{{ staging_wp_admin_user }}"
     wppass: "{{ staging_wp_pass }}"
@@ -52,9 +52,9 @@
     wpsitetitle: "{{ staging_wp_site_title }}"
    -
     role: letsencrypt
-    tags: [init, web, ssl, production]
+    tags: [web, ssl, production]
     domain: "{{ main_domain }}"
    -
     role: letsencrypt
-    tags: [init, web, ssl, staging]
+    tags: [web, ssl, staging]
     domain: "{{ staging_domain }}"
