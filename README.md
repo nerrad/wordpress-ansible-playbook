@@ -57,6 +57,7 @@ These variables are used throughout the playbook.  Here's some more details on t
 | `main_wp_site_title` | What you want used as the title for the production WordPress site when it is created. |
 | `staging_wp_site_title` | What you want used as the title for the staging WordPress site when it is created. |
 | `letsencrypt_email` | The email address to use when registering/creating letsencrypt ssl certificates.
+| `wp_db_import` | This is well documented in the vars-sample.yml file.  If you uncomment this configuration and customize it in your `vars.yml` file, then, include a sql file in the `dbimports` directly, then this playbook will import the db to the designated sites.
 
 ### 4. Execute ansible.
 
