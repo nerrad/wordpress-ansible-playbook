@@ -17,6 +17,7 @@ The following roles are in this playbook.
 | wp-cli | Installs wp-cli | init
 | wordpress | Installs and sets up wp sites for given domains.  You will end up with working vanilla WordPress sites for those domains on the server | init, web, production/staging, wordpress |
 | letsencrypt | This will create, authorize, retrieve and setup ssl certificate for the given domain(s) using the letsencrypt service.  It will deactivate the nonssl nginx configuration for the domain and activate the ssl configuration.  It will also setup a cron job for automatically renewing the certificate(s). | init, web, ssl, production/staging |
+| gitdeploy | Set's up a git deploy system on the server for pushing changes to your site(s) via git.  [Read more details here.](roles/gitdeploy/README.md) |
 
 ## Usage
 
@@ -57,7 +58,8 @@ These variables are used throughout the playbook.  Here's some more details on t
 | `main_wp_site_title` | What you want used as the title for the production WordPress site when it is created. |
 | `staging_wp_site_title` | What you want used as the title for the staging WordPress site when it is created. |
 | `letsencrypt_email` | The email address to use when registering/creating letsencrypt ssl certificates.
-| `wp_db_import` | This is well documented in the vars-sample.yml file.  If you uncomment this configuration and customize it in your `vars.yml` file, then, include a sql file in the `dbimports` directly, then this playbook will import the db to the designated sites.
+| `wp_db_import` | This is documented more in the `vars-sample.yml` file.  If you uncomment this configuration and customize it in your `vars.yml` file, then, include a sql file in the `dbimports` directly, then this role will import the db to the designated sites.
+| `git_deploy` | This documented more in the `vars-sample.yml` file. I fyou uncomment this configuration and customize it in your `vars.yml` file, this role will configure the defined websites to utilize the git deploy system.
 
 ### 4. Execute ansible.
 
