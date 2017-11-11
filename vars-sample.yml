@@ -19,7 +19,8 @@ main_wp_site_title: Production Site
 staging_wp_site_title: Staging Site
 letsencrypt_email: someemail@example.org
 
-# database import paths.  Include the path to your sql import if you want to import.
+## -- wp_db_import --
+# Include the path to your sql import if you want to import.
 # by default these are not defined. Uncomment and fill with the the correct path to your local import file that will
 # be copied over to the source.
 
@@ -31,7 +32,7 @@ letsencrypt_email: someemail@example.org
 # have it as the same as what is defined for the domain on the host.  Include the scheme (https:// or http://)
 
 # ssl is for whether the new domain should be ssl or not (https:// or http://).  It will depend on whether you've setup
-# the new site with lets encrypt cert or not (defualt true).
+# the new site with lets encrypt cert or not (default true).
 
 # db_prefix is for if the table you are importing is using an non-standard db prefix.
 
@@ -48,3 +49,21 @@ letsencrypt_email: someemail@example.org
 #    search_replace_domain: olddomain.com
 #    ssl: true
 #    db_prefix: wp_
+
+# -- git_deploy --
+# This is used to indicate required parameters for various sites you setup on git.  You can associate different named
+# named branches of the same repo with the given site.
+# Uncomment and fill out the below if you are using git deploy
+# hubdirectory: The name of the directory that will serve as the deploy "hub" for this site.  Note, if you have
+#               different directory names for each site then there will be different hubs.
+# branch_deployed:  This is the branch that will be listened for with any code pushed to the hub.  If that branch is
+#                   received, then it will automatically be deployed to the attached site.
+#
+#
+#git_deploy
+#  staging:
+#    hubdirectory: hub
+#    branch_deployed: staging
+#  production:
+#    hubdirectory: hub
+#    branch_deployed: master

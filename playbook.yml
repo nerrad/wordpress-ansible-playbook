@@ -68,3 +68,13 @@
     role: letsencrypt
     tags: [web, ssl, staging]
     domain: "{{ staging_domain }}"
+   -
+    role: gitdeploy
+    tags: [deploy, production]
+    domain: "{{ main_domain }}"
+    deploy_item: "{{ git_deploy.production }}"
+   -
+    role: gitdeploy
+    tags: [deploy, staging]
+    domain: "{{ staging_domain }}"
+    deploy_item: "{{ git_deploy.staging }}"

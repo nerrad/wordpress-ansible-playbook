@@ -1,0 +1,57 @@
+---
+
+## This role takes care of setting up a git deploy system for the website(s) installed.
+
+- block:
+
+  - name: Check if post-update already exists on server, if it does some steps can be skipped.
+    stat:
+      path: /home/{{ remote_web_user }}/{{ deploy_item.hubdirectory }}/hooks/post-update
+    register: hubsetup
+
+  - name: Creates directory for the deploy hub bare repository.
+    file:
+      path: /home/{{ remote_web_user }}/{{ deploy_item.hubdirectory }}
+      state: directory
+    when: not hubsetup.stat.exists
+
+  - name: Initialize bare git repository
+    command: git init --bare
+    args:
+      chdir: /home/{{ remote_web_user }}/{{ deploy_item.hubdirectory }}
+    when: not hubsetup.stat.exists
+
+  - name: Install post-update hook on server.
+    template:
+      src: full-post-update-hub.j2
+      dest: /home/{{ remote_web_user }}/{{ deploy_item.hubdirectory }}/hooks/post-update
+      mode: 0755
+    when: not hubsetup.stat.exists
+
+  - name: Install post-update partial for when post-update already exists on server.
+    blockinfile:
+      block: "{{ lookup('template', 'partial-post-update.j2') }}"
+      dest: /home/{{ remote_web_user }}/{{ deploy_item.hubdirectory }}/hooks/post-update
+      marker: "# --- {mark} ANSIBLE INSERTED BLOCK ---"
+      insertbefore: exec git-update-server-info
+
+  - name: Delete wp-content folder
+    file:
+      path: /home/{{ remote_web_user }}/www/{{ domain }}/wp-content
+      state: absent
+    when: not hubsetup.stat.exists
+
+  - name: Recreate blank wp-content folder
+    file:
+      path: /home/{{ remote_web_user }}/www/{{ domain }}/wp-content
+      state: directory
+    when: not hubsetup.stat.exists
+
+  - name: Clone hub in (links up hub for deploy)
+    command: git clone -o {{ deploy_item.hubdirectory }} /home/{{ remote_web_user }}/{{ deploy_item.hubdirectory }} wp-content
+    args:
+      chdir: /home/{{ remote_web_user }}/www/{{ domain }}
+    when: not hubsetup.stat.exists
+
+  become: true
+  become_user: "{{ remote_web_user }}"
