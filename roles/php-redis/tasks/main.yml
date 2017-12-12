@@ -1,0 +1,9 @@
+---
+# install php redis for php7.1
+- name: "Install php-redis for php7.1"
+  apt:
+    name: 'php7.1-redis'
+    state: present
+    force: yes
+    update_cache: yes
+  notify: restart php

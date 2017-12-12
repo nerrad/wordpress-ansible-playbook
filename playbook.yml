@@ -93,3 +93,9 @@
    -
     role: geerlingguy.composer
     tags: [composer]
+   -
+    role: geerlingguy.redis
+    tags: [redis]
+   -
+    role: php-redis
+    tags: [redis]

@@ -20,8 +20,11 @@ The following roles are in this playbook.
 | importdb | This will import a mysql database export into designated site dataabases as defined in the `wp_db_import` variable found in your `vars.yml` file (see variables section below for more info) | web, production/staging, wordpress, import
 | gitdeploy | Set's up a git deploy system on the server for pushing changes to your site(s) via git. Utilizes the `gitdeploy` variable defined in your `vars.yml` file. [Read more details here.](roles/gitdeploy/README.md) | deploy, production, staging
 | logentries | This will setup the log entries service and follow any logs that you've already defined.
-| node | adds nodejs to the server
-| grunt | adds gruntjs to the server. 
+| geerlingguy.node | adds nodejs to the server |
+| grunt | adds gruntjs to the server. |
+| geerlingguy.composer | adds composer to the server |
+| geerlingguy.redis | adds redis to the server | 
+| php-redis | adds the php7.1 module for redis to the server |
 
 ## Usage
 
@@ -68,6 +71,13 @@ These variables are used throughout the playbook.  Here's some more details on t
 | `logentries_logs` | The logs you want logentries to follow. Documented more in `vars-sample.yml` |
 | `logentries_hostname` | Optional. Documented more in `vars-sample.yml` |
 | `logentries_set_key` | Optional. Documented more in `vars-sample.yml` |
+
+**Note:** the roles imported from elsewhere have variables that can be set as well.  You can find more info about those variables within the `README.md` found in that roles directory.  This includes the following roles:
+
+- geerlingguy.redis
+- geerlingguy.composer
+- geerlingguy.nodejs
+- logentries
 
 ### 4. Execute ansible.
 
@@ -147,3 +157,4 @@ Other Roles used:
 - logentries role: https://github.com/ricbra/ansible-logentries
 - geerlingguy.nodejs: https://github.com/geerlingguy/ansible-role-nodejs
 - geerlingguy.composer: https://github.com/geerlingguy/ansible-role-composer
+- geerlingguy.redis: https://github.com/geerlingguy/ansible-role-redis
