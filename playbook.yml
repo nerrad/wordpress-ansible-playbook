@@ -11,16 +11,19 @@
     tags: [init]
    -
     role: user
-    tags: [init]
+    tags: [init, user]
    -
     role: ssh
-    tags: [init]
+    tags: [init, ssh]
    -
     role: nginx
+    tags: [nginx]
+   -
+    role: nginxsites
     tags: [init, web, production, nginx]
     domain: "{{ main_domain }}"
    -
-    role: nginx
+    role: nginxsites
     tags: [init, web, staging, nginx]
     domain: "{{ staging_domain }}"
    -
@@ -78,3 +81,6 @@
     tags: [deploy, staging]
     domain: "{{ staging_domain }}"
     deploy_item: "{{ git_deploy.staging }}"
+   -
+    role: logentries
+    tags: [logentries]

@@ -1,0 +1,7 @@
+---
+logentries_packages:
+  - logentries
+
+logentries_os_supported: yes
+logentries_repo_template: centos6.repo.j2
+logentries_daemon_package: logentries-daemon

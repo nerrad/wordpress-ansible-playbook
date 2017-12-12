@@ -1,0 +1,16 @@
+---
+
+# NOTE: this cold restart is needed as simply state=restart throws a 'pid file already exists' error if we try to
+# restart it from a stopped state
+
+- name: Stop logentries daemon
+  service: name={{ logentries_service }} state=stopped
+  listen: "restart logentries"
+
+- pause:
+    seconds: 5
+  listen: "restart logentries"
+
+- name: Start logentries daemon
+  service: name={{ logentries_service }} state=started
+  listen: "restart logentries"

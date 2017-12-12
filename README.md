@@ -19,6 +19,7 @@ The following roles are in this playbook.
 | letsencrypt | This will create, authorize, retrieve and setup ssl certificate for the given domain(s) using the letsencrypt service.  It will deactivate the nonssl nginx configuration for the domain and activate the ssl configuration.  It will also setup a cron job for automatically renewing the certificate(s). | init, web, ssl, production/staging |
 | importdb | This will import a mysql database export into designated site dataabases as defined in the `wp_db_import` variable found in your `vars.yml` file (see variables section below for more info) | web, production/staging, wordpress, import
 | gitdeploy | Set's up a git deploy system on the server for pushing changes to your site(s) via git. Utilizes the `gitdeploy` variable defined in your `vars.yml` file. [Read more details here.](roles/gitdeploy/README.md) | deploy, production, staging
+| logentries | This will setup the log entries service and follow any logs that you've already defined. 
 
 ## Usage
 
@@ -60,7 +61,11 @@ These variables are used throughout the playbook.  Here's some more details on t
 | `staging_wp_site_title` | What you want used as the title for the staging WordPress site when it is created. |
 | `letsencrypt_email` | The email address to use when registering/creating letsencrypt ssl certificates.
 | `wp_db_import` | This is documented more in the `vars-sample.yml` file.  If you uncomment this configuration and customize it in your `vars.yml` file, then, include a sql file in the `dbimports` directly, then this role will import the db to the designated sites.
-| `git_deploy` | This documented more in the `vars-sample.yml` file. I fyou uncomment this configuration and customize it in your `vars.yml` file, this role will configure the defined websites to utilize the git deploy system. 
+| `git_deploy` | This documented more in the `vars-sample.yml` file. If you uncomment this configuration and customize it in your `vars.yml` file, this role will configure the defined websites to utilize the git deploy system.
+| `logentries_account_key` | Add your logentries account key if you want logentries setup. |
+| `logentries_logs` | The logs you want logentries to follow. Documented more in `vars-sample.yml` |
+| `logentries_hostname` | Optional. Documented more in `vars-sample.yml` |
+| `logentries_set_key` | Optional. Documented more in `vars-sample.yml` |
 
 ### 4. Execute ansible.
 
@@ -134,3 +139,7 @@ Note: the `letsencrypt` folder is not a WordPress site.  It is only accessible o
 ## Credits
 
 Inspired by the playbooks, [WordPress Ansible](https://github.com/A5hleyRich/wordpress-ansible) and [WordPress Ansible Playbook](https://github.com/tlovett1/wordpress-ansible-playbook/tree/f4a5fd158b346aac830c72744a10b26807c53496)
+
+Other Roles used:
+
+- logentries role: https://github.com/ricbra/ansible-logentries

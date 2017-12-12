@@ -1,0 +1,13 @@
+---
+logentries_packages:
+  - curl
+  - logentries
+  - python-setproctitle
+
+logentries_os_supported: yes
+
+logentries_apt_repositories:
+  - "deb http://rep.logentries.com/ jessie main"
+
+logentries_apt_keys:
+  - { id: C43C79AD,  keyserver: "pgp.mit.edu" }

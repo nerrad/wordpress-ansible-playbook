@@ -18,6 +18,15 @@ staging_wp_db_name: staging_db
 main_wp_site_title: Production Site
 staging_wp_site_title: Staging Site
 letsencrypt_email: someemail@example.org
+## if you want logentries stuff setup.
+logentries_account_key: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx"
+logentries_logs:
+  - name: "Authentication"
+    path: "/var/log/auth.log"
+  - name: "Nginx-Access"
+    path: "/var/log/nginx/access.log"
+logentries_hostname: my.host.com #optional. you don't need this. will default to ansible_fqdn
+logentries_set_key: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx #optional. use existing logentries key set if you want to use it.
 
 ## -- wp_db_import --
 # Include the path to your sql import if you want to import.

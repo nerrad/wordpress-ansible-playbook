@@ -1,3 +1,5 @@
+---
+## installs and sets up Mariadb
 - name: Install MariaDB package
   apt: name={{item}} state=latest
   with_items:
@@ -13,7 +15,10 @@
 
 # localhost needs to be the last item for idempotency
 - name: Update mysql root password for all root accounts
-  mysql_user: name=root host={{ item }} password={{ mysql_root_password.stdout }}
+  mysql_user:
+      name: root
+      host: "{{ item }}"
+      password: "{{ mysql_root_password.stdout }}"
   with_items:
     - "{{ ansible_hostname }}"
     - 127.0.0.1

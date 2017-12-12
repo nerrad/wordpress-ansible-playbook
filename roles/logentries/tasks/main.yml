@@ -1,0 +1,80 @@
+---
+- name: Set OS dependent variables
+  include_vars: "{{ item }}"
+  with_first_found:
+   - "{{ ansible_distribution }}_{{ ansible_distribution_major_version }}.yml"
+   - "{{ ansible_distribution }}.yml"
+   - "{{ ansible_os_family }}_{{ ansible_distribution_major_version }}.yml"
+   - "{{ ansible_os_family }}.yml"
+
+- name: OS is supported
+  assert:
+    that: logentries_os_supported == True
+
+- name: Add APT keys
+  apt_key: id={{ item.id }} keyserver={{ item.keyserver }} state=present
+  with_items: '{{ logentries_apt_keys }}'
+  when: ansible_os_family == "Debian"
+
+- name: Add APT repositories
+  apt_repository: repo="{{ item }}" update_cache=yes
+  with_items: '{{ logentries_apt_repositories }}'
+  when: ansible_os_family == "Debian"
+
+- name: Install prequesites for RedHat
+  yum: name=libselinux-python state=present
+  when: ansible_os_family == "RedHat"
+
+- name: Copy repo template
+  template: src={{ logentries_repo_template }} dest=/etc/yum.repos.d/logentries.repo
+  when: ansible_os_family == "RedHat"
+
+- name: Install packages YUM
+  yum: name={{ item }} state=present
+  with_items: '{{ logentries_packages }}'
+  when: ansible_os_family == "RedHat"
+
+- name: Install packages APT
+  apt: name={{ item }} state=present
+  with_items: '{{ logentries_packages }}'
+  when: ansible_os_family == "Debian"
+
+- name: Ensure logentries config directory exists
+  file: path=/etc/le state=directory group=root owner=root mode=750
+  when: logentries_set_key is defined
+
+- name: Add logentries config
+  template: src=config.j2 dest=/etc/le/config mode=640 owner=root group=root
+  when: logentries_set_key is defined
+  notify:
+  - Restart logentries
+
+- name: Check if host is registered
+  command: le whoami
+  register: result
+  ignore_errors: true
+  changed_when: false
+  when: logentries_set_key is not defined
+
+- name: Register host
+  shell: "le register --force --name={{ logentries_hostname | default(ansible_fqdn) }} --hostname={{ logentries_hostname | default(ansible_fqdn) }} --yes --account-key={{ logentries_account_key }}"
+  when: result|failed and logentries_set_key is not defined
+
+- name: Install logentries daemon APT
+  apt: name={{ logentries_daemon_package }} state=present
+  when: ansible_os_family == "Debian"
+
+- name: Install logentries daemon YUM
+  yum: name={{ logentries_daemon_package }} state=present
+  when: ansible_os_family == "RedHat"
+
+- name: Follow logs
+  logentries:
+    path: "{{ item.path }}"
+    state: "{{ item.state | default('present') }}"
+    name: "{{ item.name | default(item.path) }}"
+  with_items: '{{ logentries_logs }}'
+  notify: "restart logentries"
+
+- name: Ensure logentries service running
+  service: name={{ logentries_service }} state=started enabled=yes
