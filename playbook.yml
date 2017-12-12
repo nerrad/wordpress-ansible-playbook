@@ -90,3 +90,6 @@
    -
     role: grunt
     tags: [grunt]
+   -
+    role: geerlingguy.composer
+    tags: [composer]

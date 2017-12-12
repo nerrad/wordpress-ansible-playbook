@@ -146,3 +146,4 @@ Other Roles used:
 
 - logentries role: https://github.com/ricbra/ansible-logentries
 - geerlingguy.nodejs: https://github.com/geerlingguy/ansible-role-nodejs
+- geerlingguy.composer: https://github.com/geerlingguy/ansible-role-composer
