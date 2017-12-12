@@ -84,3 +84,9 @@
    -
     role: logentries
     tags: [logentries]
+   -
+    role: geerlingguy.nodejs
+    tags: [node]
+   -
+    role: grunt
+    tags: [grunt]

@@ -19,7 +19,9 @@ The following roles are in this playbook.
 | letsencrypt | This will create, authorize, retrieve and setup ssl certificate for the given domain(s) using the letsencrypt service.  It will deactivate the nonssl nginx configuration for the domain and activate the ssl configuration.  It will also setup a cron job for automatically renewing the certificate(s). | init, web, ssl, production/staging |
 | importdb | This will import a mysql database export into designated site dataabases as defined in the `wp_db_import` variable found in your `vars.yml` file (see variables section below for more info) | web, production/staging, wordpress, import
 | gitdeploy | Set's up a git deploy system on the server for pushing changes to your site(s) via git. Utilizes the `gitdeploy` variable defined in your `vars.yml` file. [Read more details here.](roles/gitdeploy/README.md) | deploy, production, staging
-| logentries | This will setup the log entries service and follow any logs that you've already defined. 
+| logentries | This will setup the log entries service and follow any logs that you've already defined.
+| node | adds nodejs to the server
+| grunt | adds gruntjs to the server. 
 
 ## Usage
 
@@ -143,3 +145,4 @@ Inspired by the playbooks, [WordPress Ansible](https://github.com/A5hleyRich/wor
 Other Roles used:
 
 - logentries role: https://github.com/ricbra/ansible-logentries
+- geerlingguy.nodejs: https://github.com/geerlingguy/ansible-role-nodejs

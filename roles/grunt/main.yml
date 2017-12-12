@@ -1,0 +1,7 @@
+---
+## install grunt
+- name: Install gruntjs
+  npm:
+    name: grunt-cli
+    global: yes
+    state: present
