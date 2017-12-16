@@ -17,7 +17,7 @@
     tags: [init, ssh]
    -
     role: nginx
-    tags: [nginx]
+    tags: [nginx, web]
    -
     role: nginxsites
     tags: [init, web, production, nginx]
