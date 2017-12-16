@@ -4,6 +4,12 @@
     name: /home/{{ remote_web_user }}/www/letsencrypt
     state: directory
 
+- name: force restart of nginx
+  service:
+    name: nginx
+    state: restarted
+  become: yes
+
 - name: Create letsencrypt certificate
   shell: letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain }}
   args:
@@ -24,6 +30,6 @@
 
 - name: Add letsencrypt cronjob for cert renewal
   cron:
-    name: letsencrypt_renewal
+    name: letsencrypt_renewal_{{ domain }}
     special_time: weekly
     job: letsencrypt --renew certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain }} && service nginx reload
