@@ -22,15 +22,11 @@
     file:
       path: '/home/{{ remote_web_user }}/www/{{ domain }}'
       state: directory
-    tags:
-      - production
 
   - name: Create logs directory
     file:
       path: '/home/{{ remote_web_user }}/www/{{ domain }}/logs'
       state: directory
-    tags:
-      - production
 
   # installing WordPress via wp-cli
 
