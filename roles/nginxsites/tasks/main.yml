@@ -65,11 +65,17 @@
       filename: "{{ domain }}.ssl.conf"
       regexp: '(\s+|/|\.)ssl\.com(\s|/|\$|;)'
 
-- name: Modify lets encrypt to point to its own folder for authorization
+- name: Modify lets encrypt to point to its own folder for authorization (nonssl)
   replace:
     path: /etc/nginx/sites-available/{{ domain }}.nonssl.conf
     regexp: '(\s)\/sites\/letsencrypt\/public(;)?$'
     replace: '\1/home/{{ remote_web_user }}/www/letsencrypt\2'
+
+- name: Modify lets encrypt to point to its own folder for authorization (ssl)
+  replace:
+      path: /etc/nginx/sites-available/{{ domain }}.ssl.conf
+      regexp: '(\s)\/sites\/letsencrypt\/public(;)?$'
+      replace: '\1/home/{{ remote_web_user }}/www/letsencrypt\2'
 
 - name: Modify access_log path directive for configuration.
   lineinfile:
