@@ -6,52 +6,76 @@
 
   - name: Check if post-update already exists on server, if it does some steps can be skipped.
     stat:
-      path: /home/{{ remote_web_user }}/{{ deploy_item.hubdirectory }}/hooks/post-update
+      path: /home/{{ remote_web_user }}/{{ item.git_deploy.hubdirectory }}/hooks/post-update
     register: hubsetup
+    with_items:
+      - "{{ domains }}"
 
   - name: Creates directory for the deploy hub bare repository.
     file:
-      path: /home/{{ remote_web_user }}/{{ deploy_item.hubdirectory }}
+      path: /home/{{ remote_web_user }}/{{ item.0.git_deploy.hubdirectory }}
       state: directory
-    when: not hubsetup.stat.exists
+    when: '"/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path and not item.1.stat.exists'
+    with_nested:
+      - "{{ domains }}"
+      - "{{ hubsetup.results }}"
 
   - name: Initialize bare git repository
     command: git init --bare
     args:
-      chdir: /home/{{ remote_web_user }}/{{ deploy_item.hubdirectory }}
-    when: not hubsetup.stat.exists
+      chdir: /home/{{ remote_web_user }}/{{ item.0.git_deploy.hubdirectory }}
+    when: '"/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path and not item.1.stat.exists'
+    with_nested:
+      - "{{ domains }}"
+      - "{{ hubsetup.results }}"
 
   - name: Install post-update hook on server.
     template:
       src: full-post-update-hub.j2
-      dest: /home/{{ remote_web_user }}/{{ deploy_item.hubdirectory }}/hooks/post-update
+      dest: /home/{{ remote_web_user }}/{{ item.0.git_deploy.hubdirectory }}/hooks/post-update
       mode: 0755
-    when: not hubsetup.stat.exists
+    when: '"/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path and not item.1.stat.exists'
+    with_nested:
+      - "{{ domains }}"
+      - "{{ hubsetup.results }}"
 
   - name: Install post-update partial for when post-update already exists on server.
     blockinfile:
       block: "{{ lookup('template', 'partial-post-update.j2') }}"
-      dest: /home/{{ remote_web_user }}/{{ deploy_item.hubdirectory }}/hooks/post-update
+      dest: /home/{{ remote_web_user }}/{{ item.0.git_deploy.hubdirectory }}/hooks/post-update
       marker: "# --- {mark} ANSIBLE INSERTED BLOCK ---"
       insertbefore: exec git-update-server-info
+    when: '"/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path and not item.1.stat.exists'
+    with_nested:
+      - "{{ domains }}"
+      - "{{ hubsetup.results }}"
 
   - name: Delete wp-content folder
     file:
-      path: /home/{{ remote_web_user }}/www/{{ domain }}/wp-content
+      path: /home/{{ remote_web_user }}/www/{{ item.0.name }}/wp-content
       state: absent
-    when: not hubsetup.stat.exists
+    when: '"/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path and not item.1.stat.exists'
+    with_nested:
+      - "{{ domains }}"
+      - "{{ hubsetup.results }}"
 
   - name: Recreate blank wp-content folder
     file:
-      path: /home/{{ remote_web_user }}/www/{{ domain }}/wp-content
+      path: /home/{{ remote_web_user }}/www/{{ item.0.name }}/wp-content
       state: directory
-    when: not hubsetup.stat.exists
+    when: '"/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path and not item.1.stat.exists'
+    with_nested:
+      - "{{ domains }}"
+      - "{{ hubsetup.results }}"
 
   - name: Clone hub in (links up hub for deploy)
-    command: git clone -o {{ deploy_item.hubdirectory }} /home/{{ remote_web_user }}/{{ deploy_item.hubdirectory }} wp-content
+    command: git clone -o {{ item.0.git_deploy.hubdirectory }} /home/{{ remote_web_user }}/{{ item.0.git_deploy.hubdirectory }} wp-content
     args:
-      chdir: /home/{{ remote_web_user }}/www/{{ domain }}
-    when: not hubsetup.stat.exists
+      chdir: /home/{{ remote_web_user }}/www/{{ item.0.name }}
+    when: '"/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path and not item.1.stat.exists'
+    with_nested:
+      - "{{ domains }}"
+      - "{{ hubsetup.results }}"
 
   become: true
   become_user: "{{ remote_web_user }}"

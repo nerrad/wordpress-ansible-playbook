@@ -1,84 +1,80 @@
 ---
 
-# If you have valid paths to an sql file defined in {{ wp_db_import_path }} then this role will take care of importing them into the relevant db.
+# If you have valid paths to an sql file defined in {{ domains[x].wp.db_import.path }} then this role will take care of importing them into the relevant db.
 - name: Verify src exists for item.
   become: false
   local_action:
     module: stat
-    path: "{{ import_item.path }}"
-  register: import_src_path
-  when: import_item.path is defined
+    path: "{{ item.wp.db_import.path }}"
+  register: import_src_paths
+  when: item.wp.db_import.path is defined
+  with_items:
+    - "{{ domains }}"
+
 
 - block:
 
   - name: Copy sql files for import from local host to remote host.
     copy:
-      src: "{{ import_item.path }}"
-      dest: /home/{{ remote_web_user }}/www/{{ domain }}/import.sql
-    when: import_src_path.stat.exists
+      src: "{{ item.0.wp.db_import.path }}"
+      dest: /home/{{ remote_web_user }}/www/{{ item.0.name }}/import.sql
+    when: item.0.wp.db_import.path is defined and item.1.stat.path == item.0.wp.db_import.path and item.1.stat.exists
+    with_nested:
+      - "{{ domains }}"
+      - "{{ import_src_paths.results }}"
 
   - debug:
-      var: import_src_path
+      var: import_src_paths
       verbosity: 2
-
-  - debug:
-      var: import_item
-      verbosity: 2
-
-  - name: Set http scheme to https if import_item.ssl true
-    set_fact:
-      http_scheme: https://
-    when: import_item.ssl is defined and import_item.ssl
-
-  - name: Set http scheme ot http if import_item.ssl not true.
-    set_fact:
-      http_scheme: http://
-    when: import_item.ssl is not defined or not import_item.ssl
-
-  - name: Set db prefix when it is defined.
-    set_fact:
-      db_prefix: "{{ import_item.db_prefix }}"
-    when: import_item.db_prefix is defined
-
-  - name: Set db prefix default when it is not defined.
-    set_fact:
-      db_prefix: wp_
-    when: import_item.db_prefix is not defined
 
   - name: Drop existing and recreates the db using existing settings in the remotes wp-config.php
     command: wp db reset --yes
     args:
-      chdir: /home/{{ remote_web_user }}/www/{{ domain }}
-    when: import_src_path.stat.exists is defined and import_src_path.stat.exists
+      chdir: /home/{{ remote_web_user }}/www/{{ item.0.name }}
+    when: item.0.wp.db_import.path is defined and item.1.stat.path == item.0.wp.db_import.path and item.1.stat.exists
+    with_nested:
+      - "{{ domains }}"
+      - "{{ import_src_paths.results }}"
 
   - name: Import into db for domain using wp db import
     command: wp db import import.sql
     args:
-      chdir: /home/{{ remote_web_user }}/www/{{ domain }}
-    when: import_src_path.stat.exists is defined and import_src_path.stat.exists
+      chdir: /home/{{ remote_web_user }}/www/{{ item.0.name }}
+    when: item.0.wp.db_import.path is defined and item.1.stat.path == item.0.wp.db_import.path and item.1.stat.exists
+    with_nested:
+      - "{{ domains }}"
+      - "{{ import_src_paths.results }}"
 
   - name: replace existing db prefix in wp-config
     replace:
-      dest: /home/{{ remote_web_user }}/www/{{ domain }}/wp-config.php
+      dest: /home/{{ remote_web_user }}/www/{{ item.name }}/wp-config.php
       regexp: '(table_prefix = .)wp_(.;)'
-      replace: '\1{{ db_prefix }}\2'
+      replace: '\1{{ item.wp.db_import.db_prefix | default("wp_") }}\2'
+    with_items:
+      - "{{ domains }}"
 
   - name: Do search-replace on db for new domain
-    command: wp search-replace '{{ import_item.search_replace_domain }}' '{{ http_scheme }}{{ domain }}'
+    command: wp search-replace '{{ item.wp.db_import.search_replace_domain }}' '{{ item.scheme | default('http://' }}{{ item.name }}'
     args:
-      chdir: /home/{{ remote_web_user }}/www/{{ domain }}
-    when: import_item.search_replace_domain is defined  and import_item.search_replace_domain != domain
+      chdir: /home/{{ remote_web_user }}/www/{{ item.name }}
+    when: item.wp.db_import.search_replace_domain is defined  and item.wp.db_import.search_replace_domain != item.name
+    with_items:
+      - "{{ domains }}"
 
   - name: Do search-replace on db for old path to new path (for WordPress files hosted)
-    command: wp search-replace '{{ import_item.search_replace_path }}' '/home/{{ remote_web_user }}/www/{{ domain }}'
+    command: wp search-replace '{{ item.wp.db_import.search_replace_path }}' '/home/{{ remote_web_user }}/www/{{ item.name }}'
     args:
-      chdir: /home/{{ remote_web_user }}/www/{{ domain }}
-    when: import_item.search_replace_path is defined
+      chdir: /home/{{ remote_web_user }}/www/{{ item.name }}
+    when: item.wp.db_import.search_replace_path is defined
+    with_items:
+      - "{{ domains }}"
 
   - name: delete import.sql that was copied over
     file:
-      path: /home/{{ remote_web_user }}/www/{{ domain }}/import.sql
+      path: /home/{{ remote_web_user }}/www/{{ item.name }}/import.sql
       state: absent
+    with_items:
+      - "{{ domains }}"
 
   become: true
   become_user: "{{ remote_web_user }}"

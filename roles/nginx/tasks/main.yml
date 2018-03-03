@@ -27,9 +27,9 @@
 
 - name: Clone Nginx configs
   git:
-    repo: "{{ nginx_config_repo }}"
+    repo: "{{ nginx.repo }}"
     dest: /etc/nginx
-    version: "{{ nginx_config_repo_version }}"
+    version: "{{ nginx.repo_branch }}"
     force: yes
   when: not git_exists.stat.exists
 
@@ -66,6 +66,6 @@
     marker: "## {mark} ANSIBLE MANAGED BLOCK ##"
     insertafter: '# Default Logs'
     content: |
-      {{nginx_log_format}}
+      {{ nginx_log_format }}
       access_log /var/log/nginx/access-le.log le_json;
   notify: restart nginx

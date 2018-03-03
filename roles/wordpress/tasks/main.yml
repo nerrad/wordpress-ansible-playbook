@@ -2,66 +2,95 @@
 - name: Generate random password for wp db user
   command: php -r "echo md5(random_bytes(10));"
   register: db_pass
+  with_items:
+    - "{{ domains }}"
 
 - name: Create WordPress database
   mysql_db:
-    name: '{{ wpdbname }}'
+    name: '{{ item.wp.db_name }}'
     state: present
+  with_items:
+    - "{{ domains }}"
 
 - name: Create WordPress database user
   mysql_user:
-    name: '{{ wpdbname }}'
-    password: '{{ db_pass.stdout }}'
-    priv: "{{ wpdbname }}.*:ALL"
+    name: '{{ item.0.wp.db_name }}'
+    password: '{{ item.1.stdout }}'
+    priv: "{{ item.0.wp.db_name }}.*:ALL"
     host: localhost
     state: present
     update_password: on_create
+  with_together:
+    - "{{ domains }}"
+    - "{{ db_pass.results }}"
 
 - block:
   - name: Creates directory for domain web files
     file:
-      path: '/home/{{ remote_web_user }}/www/{{ domain }}'
+      path: '/home/{{ remote_web_user }}/www/{{ item.name }}'
       state: directory
+    with_items:
+      - "{{ domains }}"
 
   - name: Create logs directory
     file:
-      path: '/home/{{ remote_web_user }}/www/{{ domain }}/logs'
+      path: '/home/{{ remote_web_user }}/www/{{ item.name }}/logs'
       state: directory
+    with_items:
+      - "{{ domains }}"
 
   # installing WordPress via wp-cli
-
   - name: Is WordPress already downloaded
-    stat: path=/home/{{ remote_web_user }}/www/{{ domain }}/wp-load.php
+    stat: path=/home/{{ remote_web_user }}/www/{{ item.name }}/wp-load.php
     register: wp_downloaded
+    with_items:
+      - "{{ domains }}"
 
   - name: Download WordPress to domain directory via wp-cli
     command: wp core download
     args:
-      chdir: '/home/{{ remote_web_user }}/www/{{ domain }}'
-    when: not wp_downloaded.stat.exists
+      chdir: '/home/{{ remote_web_user }}/www/{{ item.0.name }}'
+    when: not item.1.stat.exists
+    with_together:
+      - "{{ domains }}"
+      - "{{ wp_downloaded.results }}"
 
   - name: Is WordPress config already setup
-    stat: path=/home/{{ remote_web_user }}//www/{{ domain }}/wp-config.php
+    stat: path=/home/{{ remote_web_user }}/www/{{ item.name }}/wp-config.php
     register: wp_configured
+    with_items:
+      - "{{ domains }}"
+
+  - name: debugging wp_configured var
+    debug:
+      var: wp_configured
 
   - name: Setup WordPress Config using wp-cli
-    command: wp config create --dbname={{ wpdbname|quote }} --dbuser={{ wpdbname|quote }} --dbpass={{db_pass.stdout|quote}}
+    command: wp config create --dbname={{ item.0.wp.db_name|quote }} --dbuser={{ item.0.wp.db_name|quote }} --dbpass={{item.2.stdout|quote}}
     args:
-      chdir: '/home/{{ remote_web_user }}/www/{{ domain }}'
-    when: not wp_configured.stat.exists
+      chdir: '/home/{{ remote_web_user }}/www/{{ item.0.name }}'
+    when: not item.1.stat.exists
+    with_together:
+      - "{{ domains }}"
+      - "{{ wp_configured.results }}"
+      - "{{ db_pass.results }}"
 
   - name: Is WordPress already installed
     command: wp core is-installed
     args:
-      chdir: '/home/{{ remote_web_user }}/www/{{ domain }}'
+      chdir: '/home/{{ remote_web_user }}/www/{{ item.name }}'
     register: wp_installed
-    failed_when: "'Error:' in wp_installed.stderr"
+    with_items:
+     - "{{ domains }}"
 
   - name: Install WordPress using wp-cli
-    command: wp core install --url={{ domain|quote }} --title={{ wpsitetitle|quote }} --admin_user={{ wpuser|quote }} --admin_password={{ wppass|quote }} --admin_email={{ wpemail|quote }}
+    command: wp core install --url={{ item.0.name|quote }} --title={{ item.0.wp.site_title|quote }} --admin_user={{ item.0.wp.admin_user|quote }} --admin_password={{ item.0.wp.admin_pass|quote }} --admin_email={{ item.0.wp.admin_email|quote }}
     args:
-      chdir: '/home/{{ remote_web_user }}/www/{{ domain }}'
-    when: wp_installed != 1
+      chdir: '/home/{{ remote_web_user }}/www/{{ item.0.name }}'
+    when: "'Error:' not in item.1.stderr and item.1.rc != 0"
+    with_together:
+     - "{{ domains }}"
+     - "{{ wp_installed.results }}"
 
   become: true
   become_user: "{{ remote_web_user }}"

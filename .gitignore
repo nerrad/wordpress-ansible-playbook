@@ -2,3 +2,4 @@ hosts
 vars.yml
 playbook.retry
 customs/
+playbooktest.yml

@@ -11,25 +11,33 @@
   become: yes
 
 - name: Create letsencrypt certificate
-  shell: letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain }}
+  shell: letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ item.name }}
   args:
-    creates: /etc/letsencrypt/live/{{ domain }}
+    creates: /etc/letsencrypt/live/{{ item.name }}
   notify: restart nginx
+  with_items:
+    - "{{ domains }}"
 
 - name: Remove symlink for non ssl site.
   file:
-    path: /etc/nginx/sites-enabled/{{ domain }}.nonssl.conf
+    path: /etc/nginx/sites-enabled/{{ item.name }}.nonssl.conf
     state: absent
+  with_items:
+    - "{{ domains }}"
 
 - name: Symlink ssl domain
   file:
-    src: /etc/nginx/sites-available/{{ domain }}.ssl.conf
-    dest: /etc/nginx/sites-enabled/{{ domain }}.ssl.conf
+    src: /etc/nginx/sites-available/{{ item.name }}.ssl.conf
+    dest: /etc/nginx/sites-enabled/{{ item.name }}.ssl.conf
     state: link
   notify: restart nginx
+  with_items:
+    - "{{ domains }}"
 
 - name: Add letsencrypt cronjob for cert renewal
   cron:
-    name: letsencrypt_renewal_{{ domain }}
+    name: letsencrypt_renewal_{{ item.name }}
     special_time: weekly
-    job: letsencrypt --renew certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt_email }} --agree-tos -d {{ domain }} && service nginx reload
+    job: letsencrypt --renew certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ item.name }} && service nginx reload
+  with_items:
+    - "{{ domains }}"

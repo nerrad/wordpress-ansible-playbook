@@ -1,0 +1,28 @@
+nginx_defaults:
+  file_path: /etc/nginx/sites-available
+  file_path_enabled: /etc/nginx/sites-enabled
+  letsencrypt_regex: '(\s)\/sites\/letsencrypt\/public(;)?$'
+  ssl_ext: ssl.conf
+  non_ssl_ext: nonssl.conf
+  single_wp_site:
+    -
+      type: ssl
+      src: /etc/nginx/sites-available/ssl.com
+      root_path_regex: '(\s)\/sites\/ssl\.com\/public(;)?$'
+      domain_regex: '(\s+|/|\.)ssl\.com(\s|/|\$|;)'
+    -
+      type: nonssl
+      src: /etc/nginx/sites-available/singlesite.com
+      root_path_regex: '(\s)\/sites\/singlesite\.com\/public(;)?$'
+      domain_regex: '(\s+|/|\.)singlesite\.com(\s|/|\$|;)'
+  multi_wp_site:
+    subdomain:
+        type: nonssl
+        src: /etc/nginx/sites-available/multisite-subdomain.com
+        root_path_regex: '(\s)\/sites\/multisite-subdomain\.com\/public(;)?$'
+        domain_regex: '(\s+|/|\.)multisite-subdomain\.com(\s|/|\$|;)'
+    subdirectory:
+        type: nonssl
+        src: /etc/nginx/sites-available/multisite-subdirectory.com
+        root_path_regex: '(\s)\/sites\/multisite-subdirectory\.com\/public(;)?$'
+        domain_regex: '(\s+|/|\.)multisite-subdirectory\.com(\s|/|\$|;)'

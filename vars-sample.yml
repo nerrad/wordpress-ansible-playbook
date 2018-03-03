@@ -1,78 +1,107 @@
-#vars.yml - change this for your own needs
-main_domain: mysite.com
-staging_domain: staging.mysite.com
+#Copy config to a file named vars.yml and change to suit your own needs
+
+## -- server config -- ##
+# this is the sudo user that should already be setup on the server.  Any sudo roles will use this user and this is the
+# user ansible initially connects as.
 remote_sudo_user: ubuntu
+# this is the user ansible will created for the web related services and will not have sudo privileges.
 remote_web_user: web
-remote_web_user_password: "Enter a password to use for the remote web user (must be encrypted, see http://docs.ansible.com/ansible/latest/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)"
+# This is the password ansible will create the remote web user with.  The string should be an encrypted string (see
+# Enter a password to use for the remote web user (must be encrypted, see
+# http://docs.ansible.com/ansible/latest/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
+remote_web_user_password: "EncryptedSecretString"
+# The path to the ssh public key that will be copied to the authorized_keys file for the remote_web_user when it's
+# created.  The default is usually sufficient if you've already got keys generated in the default location.
 web_user_ssh_public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
-nginx_config_repo: https://github.com/A5hleyRich/wordpress-nginx.git
-nginx_config_repo_version: master
-main_wp_admin_user: production_admin
-main_wp_pass: secret
-main_wp_admin_email: someemail@example.org
-staging_wp_admin_user: staging_admin
-staging_wp_pass: secret
-staging_wp_email: someemail@example.org
-main_wp_db_name: production_db
-staging_wp_db_name: staging_db
-main_wp_site_title: Production Site
-staging_wp_site_title: Staging Site
-letsencrypt_email: someemail@example.org
-## if you want logentries stuff setup.
+
+## -- nginx configuration -- ##
+nginx:
+  # repository used for the main nginx configuration folder. Currently the nginx role is DEPENDENT on this repository.
+  # You can fork it and modify to get specific extra configuration you want as long as you don't change elements that
+  # are used by the role.  If you want a custom configuration, you can use the custom_nginx_conf array in the domains
+  # configuration
+  repo: https://github.com/nerrad/wordpress-nginx.git
+  # this is the branch that will be pulled for the named repository
+  repo_branch: test-merge-le-phpup
+
+## -- letsencrypt configuration -- ##
+letsencrypt:
+  # this is the email address that will be used when registering domains that are flagged to be configured for ssl.
+  email: someemail@example.org
+
+## -- Logentries Configurations -- ##
+# If provided, and the logentries role is run for the playbook, then this will configure logentries.
 logentries_account_key: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx"
 logentries_logs:
   - name: "Authentication"
     path: "/var/log/auth.log"
   - name: "Nginx-Access"
     path: "/var/log/nginx/access.log"
-logentries_hostname: my.host.com #optional. you don't need this. will default to ansible_fqdn
-logentries_set_key: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx #optional. use existing logentries key set if you want to use it.
+# optional. you don't need this. will default to ansible_fqdn
+logentries_hostname: my.host.com
+# optional. use existing logentries key set if you want to use it.
+logentries_set_key: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
-## -- wp_db_import --
-# Include the path to your sql import if you want to import.
-# by default these are not defined. Uncomment and fill with the the correct path to your local import file that will
-# be copied over to the source.
+## -- Domain configurations -- ##
+# example:
+domains:
+  - name: mysite.com
+    # Set this to what scheme is desired for the url (https://, http:// etc)
+    # Note, this will be used in any search and replace if you've provided a db_import as well.
+    scheme: https://
+    # if configured then a wp site is setup. Otherwise a plain php based configuration is used
+    wp:
+      admin_user: username
+      # plain_text you can change after site creation
+      admin_pass: admin_password
+      admin_email: email@address.com
+      # name to give the database for the site
+      db_name: named_for_db
+      site_title: Title for Site
+      ## -- wp_db_import --
+      # Include the path to your sql import if you want to import.
+      # by default these are not defined. Uncomment and fill with the the correct path to your local import file that will
+      # be copied over to the source.
 
-# search_replace_path is the path to the WordPress installation where the db was exported from.  It will be replaced
-# with the path for the domain the db is being imported to.
+      # search_replace_path is the path to the WordPress installation where the db was exported from.  It will be replaced
+      # with the path for the domain the db is being imported to.
 
-# search_replace_domain is the domain in the db file for the old WordPress installation that will get replaced with the
-# domain for the new installation. If the db import is already correct for the domain either don't set the variable or
-# have it as the same as what is defined for the domain on the host.  Include the scheme (https:// or http://)
+      # search_replace_domain is the domain in the db file for the old WordPress installation that will get replaced with the
+      # domain for the new installation. If the db import is already correct for the domain either don't set the variable or
+      # have it as the same as what is defined for the domain on the host.  Include the scheme (https:// or http://)
 
-# ssl is for whether the new domain should be ssl or not (https:// or http://).  It will depend on whether you've setup
-# the new site with lets encrypt cert or not (default true).
+      # ssl is for whether the new domain should be ssl or not (https:// or http://).  It will depend on whether you've setup
+      # the new site with lets encrypt cert or not (default true).
 
-# db_prefix is for if the table you are importing is using an non-standard db prefix.
-
-#wp_db_import:
-#  staging:
-#    path: "{{ playbook_dir }}/dbimports/import.sql"
-#    search_replace_path: /path/for/db/exported/from
-#    search_replace_domain: olddomain.com
-#    ssl: true
-#    db_prefix: wp_
-#  main:
-#    path: "{{ playbook_dir }}/dbimports/import.sql"
-#    search_replace_path: /path/for/db/exported/from
-#    search_replace_domain: olddomain.com
-#    ssl: true
-#    db_prefix: wp_
-
-# -- git_deploy --
-# This is used to indicate required parameters for various sites you setup on git.  You can associate different named
-# named branches of the same repo with the given site.
-# Uncomment and fill out the below if you are using git deploy
-# hubdirectory: The name of the directory that will serve as the deploy "hub" for this site.  Note, if you have
-#               different directory names for each site then there will be different hubs.
-# branch_deployed:  This is the branch that will be listened for with any code pushed to the hub.  If that branch is
-#                   received, then it will automatically be deployed to the attached site.
-#
-#
-#git_deploy
-#  staging:
-#    hubdirectory: hub
-#    branch_deployed: staging
-#  production:
-#    hubdirectory: hub
-#    branch_deployed: master
+      # db_prefix is for if the table you are importing is using an non-standard db prefix.
+      db_import:
+        path: "{{ playbook_dir }}/dbimports/import.sql"
+        search_replace_path: /path/for/db/exported/from
+        search_replace_domain: olddomain.com
+        db_prefix: wp_
+    # -- git_deploy --
+    # This is used to indicate required parameters for various sites you setup on git.  You can associate different named
+    # named branches of the same repo with the given site.
+    # Uncomment and fill out the below if you are using git deploy
+    # hubdirectory: The name of the directory that will serve as the deploy "hub" for this site.  Note, if you have
+    #               different directory names for each site then there will be different hubs.
+    # branch_deployed:  This is the branch that will be listened for with any code pushed to the hub.  If that branch is
+    #                   received, then it will automatically be deployed to the attached site.
+    git_deploy:
+      hubdirectory: hub
+      branch_deployed: master
+    # -- custom nginx conf --
+    # If this is present then the nginx configuration for this site will be copied from the provided local paths. This
+    # will override any nginx configuration that would ordinarily get set up for a wp site even if wp directives are
+    # configured.  If you want the letsencrypt role to automatically setup a ssl cert, then the ssl directive for the
+    # domain should be true and there should be a configuration attached to non_ssl property that lets encrypt uses for
+    # the initial cert authorization.
+    custom_nginx_conf:
+      non_ssl: local/path/to/nginx.conf
+      ssl: local/path/to/nginx-ssl.conf
+    # -- custom web root --
+    # If set, ansible will clone the provided repository into the web root for this domain and checkout master branch
+    # (unless another named branch is declared).
+    custom_web_root:
+      repo: git://address_to_repository_to_clone_into_domain_web_root.git
+      branch: master

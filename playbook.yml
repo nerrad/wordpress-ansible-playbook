@@ -1,101 +1,63 @@
 ---
-- hosts: mysite
+### New playbook
+- hosts: webservers
   vars_files:
     - vars.yml
   remote_user: "{{ remote_sudo_user }}"
   become: true
   ignore_errors: "{{ ansible_check_mode }}"
   roles:
-   -
-    role: common
-    tags: [init]
-   -
-    role: user
-    tags: [init, user]
-   -
-    role: ssh
-    tags: [init, ssh]
-   -
-    role: nginx
-    tags: [nginx, web]
-   -
-    role: nginxsites
-    tags: [init, web, production, nginx]
-    domain: "{{ main_domain }}"
-   -
-    role: nginxsites
-    tags: [init, web, staging, nginx]
-    domain: "{{ staging_domain }}"
-   -
-    role: php
-    tags: [init]
-   -
-    role: mariadb
-    tags: [init]
-   -
-    role: wp-cli
-    tags: [init]
-   -
-    role: wordpress
-    tags: [web, production, wordpress]
-    domain: "{{ main_domain }}"
-    wpuser: "{{ main_wp_admin_user }}"
-    wppass: "{{ main_wp_pass }}"
-    wpemail: "{{ main_wp_admin_email }}"
-    wpdbname: "{{ main_wp_db_name }}"
-    wpsitetitle: "{{ main_wp_site_title }}"
-   -
-    role: wordpress
-    tags: [web, staging, wordpress]
-    domain: "{{ staging_domain }}"
-    wpuser: "{{ staging_wp_admin_user }}"
-    wppass: "{{ staging_wp_pass }}"
-    wpemail: "{{ staging_wp_email }}"
-    wpdbname: "{{ staging_wp_db_name }}"
-    wpsitetitle: "{{ staging_wp_site_title }}"
-   -
-    role: importdb
-    tags: [web, staging, wordpress, import]
-    domain: "{{ staging_domain }}"
-    import_item: "{{ wp_db_import.staging }}"
-   -
-    role: importdb
-    tags: [web, production, wordpress, import]
-    domain: "{{ main_domain }}"
-    import_item: "{{ wp_db_import.main }}"
-   -
-    role: letsencrypt
-    tags: [web, ssl, production]
-    domain: "{{ main_domain }}"
-   -
-    role: letsencrypt
-    tags: [web, ssl, staging]
-    domain: "{{ staging_domain }}"
-   -
-    role: gitdeploy
-    tags: [deploy, production]
-    domain: "{{ main_domain }}"
-    deploy_item: "{{ git_deploy.production }}"
-   -
-    role: gitdeploy
-    tags: [deploy, staging]
-    domain: "{{ staging_domain }}"
-    deploy_item: "{{ git_deploy.staging }}"
-   -
-    role: logentries
-    tags: [logentries]
-   -
-    role: geerlingguy.nodejs
-    tags: [node]
-   -
-    role: grunt
-    tags: [grunt]
-   -
-    role: geerlingguy.composer
-    tags: [composer]
-   -
-    role: geerlingguy.redis
-    tags: [redis]
-   -
-    role: php-redis
-    tags: [redis]
+    -
+     role: common
+     tags: [init]
+    -
+     role: user
+     tags: [init, user]
+    -
+     role: ssh
+     tags: [init, ssh]
+    -
+     role: nginx
+     tags: [nginx, web]
+    -
+     role: nginxsites
+     tags: [init, web, nginx]
+    -
+     role: php
+     tags: [init]
+    -
+     role: mariadb
+     tags: [init]
+    -
+     role: wp-cli
+     tags: [init]
+    -
+     role: wordpress
+     tags: [web, wordpress]
+    -
+     role: importdb
+     tags: [web, wordpress, import]
+    -
+     role: letsencrypt
+     tags: [web, ssl]
+    -
+     role: gitdeploy
+     tags: [deploy]
+    -
+     role: logentries
+     tags: [logentries]
+    -
+     role: geerlingguy.nodejs
+     tags: [node]
+    -
+     role: grunt
+     tags: [grunt]
+    -
+     role: geerlingguy.composer
+     tags: [composer]
+    -
+     role: geerlingguy.redis
+     tags: [redis]
+    -
+     role: php-redis
+     tags: [redis]
