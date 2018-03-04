@@ -23,10 +23,6 @@
       - "{{ domains }}"
       - "{{ import_src_paths.results }}"
 
-  - debug:
-      var: import_src_paths
-      verbosity: 2
-
   - name: Drop existing and recreates the db using existing settings in the remotes wp-config.php
     command: wp db reset --yes
     args:

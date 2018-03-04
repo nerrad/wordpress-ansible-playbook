@@ -61,10 +61,6 @@
     with_items:
       - "{{ domains }}"
 
-  - name: debugging wp_configured var
-    debug:
-      var: wp_configured
-
   - name: Setup WordPress Config using wp-cli
     command: wp config create --dbname={{ item.0.wp.db_name|quote }} --dbuser={{ item.0.wp.db_name|quote }} --dbpass={{item.2.stdout|quote}}
     args:

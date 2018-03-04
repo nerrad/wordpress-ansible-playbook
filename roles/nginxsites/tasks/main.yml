@@ -1,10 +1,6 @@
 ---
 # sets up all nginx sites configurations
 
-- name: debugging domains var.
-  debug:
-    var: domains
-
 - name: Copy configurations to new domain based configuration.
   copy:
     remote_src: yes
