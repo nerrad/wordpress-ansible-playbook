@@ -50,32 +50,41 @@
       - "{{ domains }}"
       - "{{ hubsetup.results }}"
 
+
+  - name: Check if remote has already been registered in the attached domain.
+    command: git ls-remote {{ item.git_deploy.hubdirectory }} &> /dev/null;
+    args:
+      chdir: /home/{{ remote_web_user }}/www/{{ item.name }}/wp-content
+    register: remote_set
+    with_items:
+      - "{{ domains }}"
+
   - name: Delete wp-content folder
     file:
       path: /home/{{ remote_web_user }}/www/{{ item.0.name }}/wp-content
       state: absent
-    when: '"/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path and not item.1.stat.exists'
+    when: '"/home/"+remote_web_user+"/www/"+item.0.name+"/wp-content" == item.1.invocation.module_args.chdir and item.1.rc != 0'
     with_nested:
       - "{{ domains }}"
-      - "{{ hubsetup.results }}"
+      - "{{ remote_set.results }}"
 
   - name: Recreate blank wp-content folder
     file:
       path: /home/{{ remote_web_user }}/www/{{ item.0.name }}/wp-content
       state: directory
-    when: '"/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path and not item.1.stat.exists'
+    when: '"/home/"+remote_web_user+"/www/"+item.0.name+"/wp-content" == item.1.invocation.module_args.chdir and item.1.rc != 0'
     with_nested:
       - "{{ domains }}"
-      - "{{ hubsetup.results }}"
+      - "{{ remote_set.results }}"
 
   - name: Clone hub in (links up hub for deploy)
     command: git clone -o {{ item.0.git_deploy.hubdirectory }} /home/{{ remote_web_user }}/{{ item.0.git_deploy.hubdirectory }} wp-content
     args:
       chdir: /home/{{ remote_web_user }}/www/{{ item.0.name }}
-    when: '"/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path and not item.1.stat.exists'
+    when: '"/home/"+remote_web_user+"/www/"+item.0.name+"/wp-content" == item.1.invocation.module_args.chdir and item.1.rc != 0'
     with_nested:
       - "{{ domains }}"
-      - "{{ hubsetup.results }}"
+      - "{{ remote_set.results }}"
 
   become: true
   become_user: "{{ remote_web_user }}"
