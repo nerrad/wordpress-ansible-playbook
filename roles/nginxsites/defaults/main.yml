@@ -5,13 +5,11 @@ nginx_defaults:
   ssl_ext: ssl.conf
   non_ssl_ext: nonssl.conf
   single_wp_site:
-    -
-      type: ssl
+    - type: ssl
       src: /etc/nginx/sites-available/ssl.com
       root_path_regex: '(\s)\/sites\/ssl\.com\/public(;)?$'
       domain_regex: '(\s+|/|\.)ssl\.com(\s|/|\$|;)'
-    -
-      type: nonssl
+    - type: nonssl
       src: /etc/nginx/sites-available/singlesite.com
       root_path_regex: '(\s)\/sites\/singlesite\.com\/public(;)?$'
       domain_regex: '(\s+|/|\.)singlesite\.com(\s|/|\$|;)'
