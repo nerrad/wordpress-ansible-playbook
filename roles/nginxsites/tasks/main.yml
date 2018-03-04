@@ -62,12 +62,22 @@
     - "{{ domains }}"
     - "{{ nginx_defaults.single_wp_site }}"
 
+## does the ssl conf symlink exist?
+- name: Does ssl configuration symlink exist?
+  register: ssl_symlink_exists
+  stat:
+    path: "{{ nginx_defaults.file_path_enabled }}/{{ item.name }}.{{ nginx_defaults.ssl_ext }}"
+  with_items:
+    - "{{ domains }}"
+
 ## symlink non ssl domain for nginx (ssl domain symlink happens in letsencrypt role)
 - name: Symlink non ssl domain (ssl domain symlink happens in letsencrypt role)
   file:
-    src: "{{ nginx_defaults.file_path }}/{{ item.name }}.{{ nginx_defaults.non_ssl_ext }}"
-    dest: "{{ nginx_defaults.file_path_enabled }}/{{ item.name }}.{{ nginx_defaults.non_ssl_ext }}"
+    src: "{{ nginx_defaults.file_path }}/{{ item.0.name }}.{{ nginx_defaults.non_ssl_ext }}"
+    dest: "{{ nginx_defaults.file_path_enabled }}/{{ item.0.name }}.{{ nginx_defaults.non_ssl_ext }}"
     state: link
   notify: restart nginx
-  with_items:
+  when: 'nginx_defaults.file_path_enabled+"/"+item.0.name+"."+nginx_defaults.ssl_ext == item.1.invocation.module_args.path and not item.1.stat.exists'
+  with_nested:
     - "{{ domains }}"
+    - "{{ ssl_symlink_exists.results }}"
