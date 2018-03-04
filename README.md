@@ -2,6 +2,8 @@
 
 This repository contains an ansible playbook for provisioning a WordPress based server with both a production and staging website, optional ssl certificates (provided free via letsencrypt), PHP 7.1, Mariadb, wp-cli, and nginx.
 
+> Note: currently this is oriented towards a Ubuntu or Debian based box.
+
 ## Roles
 
 The following roles are in this playbook.
@@ -11,20 +13,21 @@ The following roles are in this playbook.
 | common | Installs latest for `fail2ban`, `git-core`, `letsencrypt`,  `unzip`, `python-pip`, `python-dev` | init
 | user | Creates a web user and web user group and adds a provided .ssh key.  This user will be used for all web services (and web site folders) | init
 | ssh |  Disables root login and password authentication for ssh (hardening) | init |
-| nginx | Sets up all the nginx config from the provided repository for given domains. While this role does setup both ssl and non-ssl configs for the provided domain(s), it only _activates_ the non-ssl config.  Also sets up the catchall `default` config for any non request matches to the server. | init, web, production/staging, nginx |
+| nginx | Clones nginx config from the provided repository and configures default settings (including ssl global settings, catchall logs, and the default catchall config) | web, nginx |
+|nginxsites | Configures the nginx conf files for the registered domains. While this role does setup both ssl and non-ssl configs for the provided domain(s), it only _activates_ the non-ssl config.  | nginx, web, sites      |
 | php | Installs PHP 7.1 and all necessary php extensions WordPress needs.  Also modifies the php configs to set the web user etc. | init |
 | mariadb | Installs `mariadb-server` and `python-mysqldb`, sets up root password for all root accounts (generated server side), creates .my.cnf with root password creds (to `/root/.my.cnf` on the server), deletes anonymous mysql server user for server hostname and for local host and removes the mysql test database. | init |
 | wp-cli | Installs wp-cli | init
-| wordpress | Installs and sets up wp sites for given domains.  You will end up with working vanilla WordPress sites for those domains on the server | init, web, production/staging, wordpress |
-| letsencrypt | This will create, authorize, retrieve and setup ssl certificate for the given domain(s) using the letsencrypt service.  It will deactivate the nonssl nginx configuration for the domain and activate the ssl configuration.  It will also setup a cron job for automatically renewing the certificate(s). | init, web, ssl, production/staging |
-| importdb | This will import a mysql database export into designated site dataabases as defined in the `wp_db_import` variable found in your `vars.yml` file (see variables section below for more info) | web, production/staging, wordpress, import
-| gitdeploy | Set's up a git deploy system on the server for pushing changes to your site(s) via git. Utilizes the `gitdeploy` variable defined in your `vars.yml` file. [Read more details here.](roles/gitdeploy/README.md) | deploy, production, staging
-| logentries | This will setup the log entries service and follow any logs that you've already defined.
-| geerlingguy.node | adds nodejs to the server |
-| grunt | adds gruntjs to the server. |
-| geerlingguy.composer | adds composer to the server |
-| geerlingguy.redis | adds redis to the server | 
-| php-redis | adds the php7.1 module for redis to the server |
+| wordpress | Installs and sets up wp sites for given domains.  You will end up with working vanilla WordPress sites for those domains on the server | web, wordpress |
+| letsencrypt | This will create, authorize, retrieve and setup ssl certificate for the given domain(s) using the letsencrypt service.  It will deactivate the nonssl nginx configuration for the domain and activate the ssl configuration.  It will also setup a cron job for automatically renewing the certificate(s). | web, ssl |
+| importdb | This will import a mysql database export into designated site dataabases as defined in the `wp_db_import` variable found in your `vars.yml` file (see variables section below for more info) | web, wordpress, import
+| gitdeploy | Set's up a git deploy system on the server for pushing changes to your site(s) via git. Utilizes the `gitdeploy` variable defined in your `vars.yml` file with domains registered to use it. [Read more details here.](roles/gitdeploy/README.md) | deploy 
+| logentries | This will setup the log entries service and follow any logs that you've already defined. | logentries
+| geerlingguy.node | adds nodejs to the server | node
+| grunt | adds grunt-cli to the server. | grunt
+| geerlingguy.composer | adds composer to the server | composer
+| geerlingguy.redis | adds redis to the server |  redis
+| php-redis | adds the php7.1 module for redis to the server | redis
 
 ## Usage
 
@@ -42,35 +45,7 @@ It goes without saying that this is an ansible playbook so its assumed there's a
 
 > **Note:** Currently the default `nginx_config_repo` will _not_ work as is until [submitted](https://github.com/A5hleyRich/wordpress-nginx/pull/14) [pull requests](https://github.com/A5hleyRich/wordpress-nginx/pull/13) for that repository are merged in. In the meantime, you can use https://github.com/nerrad/wordpress-nginx.git and the `test-merge-le-phpup` branch there.
 
-These variables are used throughout the playbook.  Here's some more details on them:
-
-| variable | description |
-|----------|--------------|
-| `main_domain` | Enter what is the domain for the "production" web-site on your server.  The `production` tag will always relate to this domain. |
-| `staging_domain` | Enter what is the domain for the "staging" web-site on your server.  The `staging` tag will always relate to this domain. |
-| `remote_sudo_user` | This should correspond with the sudo user you created on the host(s) you are deploying to. |
-| `remote_web_user` | This is the name of the user that will be created for all web services on your server (nginx, php, and website ownership). |
-| `remote_web_user_password` | Enter the encrypted value for the password you'd like assigned to the `remotye_web_user` when its created.  Password authentication for accessing the server (via ssh) as this user is turned off, however its still good practice to set a password on the user.  You can visit [some docs](http://docs.ansible.com/ansible/latest/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module) for instructions on how to encrypt your password for adding here. |
-| `web_user_ssh_public_key` | Replace `~/.ssh/id_rsa.pub` if your public ssh key is located somewhere else.  This path is for the machine ansible is being run from. |
-| `nginx_config_repo` | In most cases you can just leave this repository address alone, but if you want to use a customized version you can enter your own repository here.  Keep in mind the nginx role heavily relies on this repository so if you *do* customize this, you will likely need to modify the nginx role for the play accordingly. |
-| `nginx_config_repo_version` | If there's a specific branch other than master for the repository given with the `nginx_config_repo` variable, then you can indicate that branch here. |
-| `main_wp_admin_user` | This value will be used for the production WordPress site admin user when that site is setup. |
-| `main_wp_pass` | This value will be used for the production site WordPress admin user password when that site is setup. |
-| `main_wp_admin_email` | This is the email address that will be assigned to the production site's admin user. |
-| `staging_wp_admin_user` | This value will be used for the staging WordPress site's admin user when that site is created. |
-| `staging_wp__pass` | This value will be used for the staging site WordPress admin user password when that site is created. |
-| `staging_wp_email` | This value is the email address that will be assigned to the staging sites's admin user. |
-|`main_wp_db_name` | This value is what you want the name of the database to be for the production WordPress site. A random password will be automatically generated by ansible on the host |
-| `staging_wp_db_name` | This value is what you want the name of the database to be for the staging WordPress site. A random password will be automatically generated by ansible on the host |
-| `main_wp_site_title` | What you want used as the title for the production WordPress site when it is created. |
-| `staging_wp_site_title` | What you want used as the title for the staging WordPress site when it is created. |
-| `letsencrypt_email` | The email address to use when registering/creating letsencrypt ssl certificates.
-| `wp_db_import` | This is documented more in the `vars-sample.yml` file.  If you uncomment this configuration and customize it in your `vars.yml` file, then, include a sql file in the `dbimports` directly, then this role will import the db to the designated sites.
-| `git_deploy` | This documented more in the `vars-sample.yml` file. If you uncomment this configuration and customize it in your `vars.yml` file, this role will configure the defined websites to utilize the git deploy system.
-| `logentries_account_key` | Add your logentries account key if you want logentries setup. |
-| `logentries_logs` | The logs you want logentries to follow. Documented more in `vars-sample.yml` |
-| `logentries_hostname` | Optional. Documented more in `vars-sample.yml` |
-| `logentries_set_key` | Optional. Documented more in `vars-sample.yml` |
+These variables are used throughout the playbook.  The vars-sample.yml file is documented inline so you can read more about the various variables there.  Take note, that the `domains` variable is a dictionary array where each domain is its own entity.  So you can add multiple domains as a part of your configuration and this playbook will automatically loop through them for the various roles in use.
 
 **Note:** the roles imported from elsewhere have variables that can be set as well.  You can find more info about those variables within the `README.md` found in that roles directory.  This includes the following roles:
 
@@ -87,18 +62,11 @@ The playbook is setup with tags to make it easier to setup only what you need on
 ansible-playbook playbook.yml --skip-tags="init"
 ```
 
-Or you may only want to setup the staging site first:
-
-```
-ansible-playbook playbook.yml --skip-tags="production"
-```
-
-Or you may have a new domain you want to setup on an existing server that was initialized by this playbook.  In which case you could just modify your `vars.yml` so `main_domain` has your new domain and execute:
+Or you may have a new domain you want to setup on an existing server that was initialized by this playbook.  In which case you could just modify your `vars.yml` so there is a new domain entity in the `domains` array and then run:
 
 ```
 ansible-playbook playbook.yml --tags="web"
 ```
-
 
 The LetsEncrypt role requires your server to be publicly accessible with the given domains pointing to it. If you don't have this setup yet and are just getting the server setup for initial development you can skip letsencrypt setup by doing this:
 
@@ -110,12 +78,6 @@ Then when you are ready to add ssl to existing websites after they are publicly 
 
 ```
 ansible-playbook playbook.yml --tags="ssl"
-```
-
-Or you can optionally only set up ssl for staging via:
-
-```
-ansible-playbook playbook.yml --tags="ssl" --skip-tags="production"
 ```
 
 Of course if _do_ have the server publicly accessible for your given domains and you just want to setup everything on a fresh server, then you can do just execute the full playbook:
@@ -136,7 +98,7 @@ The following structure is used for the WordPress sites created:
     └── logs
         └── error.log
         └── access.log
-    └── ...all other WordPress files/directories    
+    └── ...all other WordPress files/directories  
 ├── staging.mysite.com (staging)
     └── logs
         └── error.log
