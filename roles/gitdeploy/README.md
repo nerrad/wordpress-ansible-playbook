@@ -8,7 +8,7 @@ The gitdeploy role configures the server to utilize a git deploy system for push
 ssh://{server_web_username}@{server_ip_address}/~/{bare_git_repo_directory_name}
 ```
 
-So, if the value of your `remote_web_user` was `web`, the server ip address you're deploying to is `155.55.55.55` and you configured the `hubdirectory` variable (see variables section) to `hub`.  Then the address you use for remote in your git client would be:
+So, if the value of your `remote_web_user` was `web`, the server ip address you're deploying to is `155.55.55.55` and you configured the `hubdirectory` variable (see variables section) to `hub`, then the address you use for remote in your git client would be:
 
 ```
 ssh://web@155.55.55.55/~/hub
@@ -29,12 +29,12 @@ Some more details:
 
 This role uses the following custom variables defined within your `vars.yml` file:
 
+> **Note**: since the bare git repository used for the "hub" needs to be linked to a specific site.  The variables are part of the defined domain entity within the top-level `domains` dictionary array (see `vars-sample.yml` for an example)
+
 | Variable | Value Desciption |
 | --------- | -------------- |
-| staging.hubdirectory | The value you give here is what will be used for directory name of the bare git repo you push changes for your staging website to.  It will also be used as the name of the remote setup within your WordPress wp-content folder. |
-| staging.branch_deployed | The value you give here is what branch in the hub's repository will be linked with whatever site is setup for`staging_domain`.
-| production.hubdirectory | Same as `staging.hubdirectory` except whatever is setup as the directory here will be linked to the website defined by `main_domain`.  Typically you'll have `hubdirectory` be the same value for both production and staging variations (but with just different branches) but the configuration does allow for completely different repositories if that's your need. |
-| production.branch_deployed | The value you give here is what branch in the defined hub's repository that will be linked to whatever site is setup for `main_domain`  
+| git_deploy.hubdirectory | The value you give here is what will be used for directory name of the bare git repo you push changes for your staging website to.  It will also be used as the name of the remote setup within your WordPress wp-content folder. |
+| git_deploy.branch_deployed | The value you give here is what branch in the hub's repository will be linked with the branch for the named site.  If you use a value for `git_deploy.hubdirectory`with a domain that already exists then this will simply register this site in the same hub as it is assumed that it is sharing the same repository as the other domain.  Examples of where this might be the case is if you have a `staging.domain.com` for a staging site (which receives pushes from a `staging` branch) and a `domain.com` for a production site (which receives pushes from a `master` branch).
 
 
 ## Role Tasks
@@ -42,8 +42,8 @@ This role uses the following custom variables defined within your `vars.yml` fil
 This role does the following on the server:
 
 - Checks if the server already has a `post-update` hook setup in the defined hub directory being setup.  If it does, then most of the following steps will be skipped.
-- If it doesn't already exist, the defined name for the `hub` directory is created and a bare git repository initialized in it.
-- If it doesn't already exist, a post-update file (and contents) will be created in `~/{hub}/hooks/`. 
+- If it doesn't already exist, the defined name for the `git_deploy.hubdirectory` is created and a bare git repository initialized in it.
+- If it doesn't already exist, a post-update file (and contents) will be created in `~/{git_deploy.hubdirectory}/hooks/`. 
 - This step is the only step that runs regardless of whether the `post-update` hook already exists, it will add to the `post_update` file a new partial script for the web site being setup.  This is so you can add additional site's to the post-update script via ansible subsequently to initial setup.
 - If `post-update` was newly created, then the `wp-content` folder for the linked web site is deleted, and recreated (empty).  Then the new 'hub' is setup as a git remote within the `wp-content` folder.
 
