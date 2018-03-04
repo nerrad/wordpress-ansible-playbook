@@ -21,7 +21,7 @@
      tags: [nginx, web]
     -
      role: nginxsites
-     tags: [init, web, nginx]
+     tags: [nginx, web, sites]
     -
      role: php
      tags: [init]
