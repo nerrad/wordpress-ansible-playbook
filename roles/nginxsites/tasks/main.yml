@@ -7,6 +7,9 @@
     src: "{{ item.1.src }}"
     dest: "{{ nginx_defaults.file_path }}/{{ item.0.name }}.{{ item.1.type }}.conf"
     force: no
+  when: >
+    (("all" in domains_to_use and "none" in domains_to_skip) or item.0.name in domains_to_use)
+    and item.0.name not in domains_to_skip
   with_nested:
     - "{{ domains }}"
     - "{{ nginx_defaults.single_wp_site }}"
@@ -16,6 +19,9 @@
     dest: "{{ nginx_defaults.file_path }}/{{ item.0.name }}.{{ item.1.type }}.conf"
     regexp: "{{ item.1.root_path_regex }}"
     replace: '\1/home/{{ remote_web_user }}/www/{{ item.0.name }}\2'
+  when: >
+    (("all" in domains_to_use and "none" in domains_to_skip) or item.0.name in domains_to_use)
+    and item.0.name not in domains_to_skip
   with_nested:
     - "{{ domains }}"
     - "{{ nginx_defaults.single_wp_site }}"
@@ -25,6 +31,9 @@
     path: "{{ nginx_defaults.file_path }}/{{ item.0.name }}.{{ item.1.type }}.conf"
     regexp: "{{ item.1.domain_regex }}"
     replace: '\1{{ item.0.name }}\2'
+  when: >
+    (("all" in domains_to_use and "none" in domains_to_skip) or item.0.name in domains_to_use)
+    and item.0.name not in domains_to_skip
   with_nested:
     - "{{ domains }}"
     - "{{ nginx_defaults.single_wp_site }}"
@@ -35,6 +44,9 @@
     path: "{{ nginx_defaults.file_path }}/{{ item.0.name }}.{{ item.1.type }}.conf"
     regexp: "{{ nginx_defaults.letsencrypt_regex }}"
     replace: '\1/home/{{ remote_web_user }}/www/letsencrypt\2'
+  when: >
+    (("all" in domains_to_use and "none" in domains_to_skip) or item.0.name in domains_to_use)
+    and item.0.name not in domains_to_skip
   with_nested:
     - "{{ domains }}"
     - "{{ nginx_defaults.single_wp_site }}"
@@ -46,6 +58,9 @@
     regexp: "access_log"
     line: "access_log /home/{{ remote_web_user }}/www/{{ item.0.name }}/logs/access.log;"
     state: present
+  when: >
+    (("all" in domains_to_use and "none" in domains_to_skip) or item.0.name in domains_to_use)
+    and item.0.name not in domains_to_skip
   with_nested:
     - "{{ domains }}"
     - "{{ nginx_defaults.single_wp_site }}"
@@ -58,6 +73,9 @@
     regexp: "error_log"
     line: "error_log /home/{{ remote_web_user }}/www/{{ item.0.name }}/logs/error.log;"
     state: present
+  when: >
+    (("all" in domains_to_use and "none" in domains_to_skip) or item.0.name in domains_to_use)
+    and item.0.name not in domains_to_skip
   with_nested:
     - "{{ domains }}"
     - "{{ nginx_defaults.single_wp_site }}"
@@ -67,6 +85,9 @@
   register: ssl_symlink_exists
   stat:
     path: "{{ nginx_defaults.file_path_enabled }}/{{ item.name }}.{{ nginx_defaults.ssl_ext }}"
+  when: >
+    (("all" in domains_to_use and "none" in domains_to_skip) or item.name in domains_to_use)
+    and item.name not in domains_to_skip
   with_items:
     - "{{ domains }}"
 
@@ -77,7 +98,10 @@
     dest: "{{ nginx_defaults.file_path_enabled }}/{{ item.0.name }}.{{ nginx_defaults.non_ssl_ext }}"
     state: link
   notify: restart nginx
-  when: 'nginx_defaults.file_path_enabled+"/"+item.0.name+"."+nginx_defaults.ssl_ext == item.1.invocation.module_args.path and not item.1.stat.exists'
+  when: >
+    (item.1.skipped is undefined or not item.1.skipped)
+    and nginx_defaults.file_path_enabled+"/"+item.0.name+"."+nginx_defaults.ssl_ext == item.1.invocation.module_args.path
+    and not item.1.stat.exists
   with_nested:
     - "{{ domains }}"
     - "{{ ssl_symlink_exists.results }}"

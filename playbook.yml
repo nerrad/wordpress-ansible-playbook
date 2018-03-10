@@ -1,6 +1,16 @@
 ---
 ### New playbook
 - hosts: webservers
+  ## if you want to only have specific domains from your `vars.yml` file to be executed then you can use the
+  ## `-e` command line flag to send in either the domains to include via a `include_domains` var, or domains to exclude
+  ## via a `skip_domains` variable.
+  ## Example:
+  ## $:> ansible-playbook playbook.yml -e "include_domains=domaina.com,domainb.com,domainc.com"
+  vars:
+    domuse: "{{ include_domains | default('all') }}"
+    domains_to_use: "{{ domuse.split(',') }}"
+    domskip: "{{ skip_domains | default('none') }}"
+    domains_to_skip: "{{ domskip.split(',') }}"
   vars_files:
     - vars.yml
   remote_user: "{{ remote_sudo_user }}"

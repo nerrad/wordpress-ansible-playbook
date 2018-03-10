@@ -88,6 +88,31 @@ ansible-playbook playbook.yml
 
 So you can see with the tags, there's many options for how you use this playbook!
 
+### Running play for only specific domains
+It is also possible to only include or exclude specific domains defined in your `vars.yml` file.  One scenario where this would be useful is if you wanted to speed up the deploy of a new site for a domain to the server.  
+
+To do this, you utilize the `-e` flag on the `ansible-playbook` command to pass along extra variables that this playbook will listen for:
+
+`include_domains`: Any domains listed here will be _included_ in the play.
+`exclude_domains`: Any domains listed here will be _excluded_ from the play.  Note: if you have the same domain listed with both variables, exclude will override include.
+
+**Example A: Including domains**
+
+In the following example, only the `testc.mydomain.com` and `testd.mydomain.com` sites from your `vars.yml` file will have the play executed on them.
+
+```
+ansible-playbook playbook.yml -e "include_domains=testc.mydomain.com,testd.mydomain.com"
+```
+
+**Example B: Excluding domains**
+
+In the following example, both `testc.mydomain.com` and `testd.mydomain.com` sites from your `vars.yml` file will be excluded form the playbook execution.
+
+```
+ansible-playbook playbook.yml -e "exclude_domains=testc.mydomain.com,testd.mydomain.com"
+```
+
+
 ## Directory structure for created sites:
 
 The following structure is used for the WordPress sites created:
