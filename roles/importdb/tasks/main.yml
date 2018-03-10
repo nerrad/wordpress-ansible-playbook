@@ -7,7 +7,10 @@
     module: stat
     path: "{{ item.wp.db_import.path }}"
   register: import_src_paths
-  when: item.wp.db_import is defined and item.wp.db_import.path is defined
+  when: >
+    item.wp.db_import is defined and item.wp.db_import.path is defined
+    and (("all" in domains_to_use and "none" in domains_to_skip) or item.name in domains_to_use)
+    and item.name not in domains_to_skip
   with_items:
     - "{{ domains }}"
 
@@ -18,7 +21,12 @@
     copy:
       src: "{{ item.0.wp.db_import.path }}"
       dest: /home/{{ remote_web_user }}/www/{{ item.0.name }}/import.sql
-    when: item.0.wp.db_import is defined and item.0.wp.db_import.path is defined and item.1.stat.path == item.0.wp.db_import.path and item.1.stat.exists
+    when: >
+      (item.1.skipped is undefined or not item.1.skipped)
+      and item.0.wp.db_import is defined
+      and item.0.wp.db_import.path is defined
+      and item.1.stat.path == item.0.wp.db_import.path
+      and item.1.stat.exists
     with_nested:
       - "{{ domains }}"
       - "{{ import_src_paths.results }}"
@@ -27,7 +35,12 @@
     command: wp db reset --yes
     args:
       chdir: /home/{{ remote_web_user }}/www/{{ item.0.name }}
-    when: item.0.wp.db-import is defined and item.0.wp.db_import.path is defined and item.1.stat.path == item.0.wp.db_import.path and item.1.stat.exists
+    when: >
+      (item.1.skipped is undefined or not item.1.skipped)
+      and item.0.wp.db_import is defined
+      and item.0.wp.db_import.path is defined
+      and item.1.stat.path == item.0.wp.db_import.path
+      and item.1.stat.exists
     with_nested:
       - "{{ domains }}"
       - "{{ import_src_paths.results }}"
@@ -36,7 +49,12 @@
     command: wp db import import.sql
     args:
       chdir: /home/{{ remote_web_user }}/www/{{ item.0.name }}
-    when: item.0.wp.db-import is defined and item.0.wp.db_import.path is defined and item.1.stat.path == item.0.wp.db_import.path and item.1.stat.exists
+    when: >
+      (item.1.skipped is undefined or not item.1.skipped)
+      and item.0.wp.db_import is defined
+      and item.0.wp.db_import.path is defined
+      and item.1.stat.path == item.0.wp.db_import.path
+      and item.1.stat.exists
     with_nested:
       - "{{ domains }}"
       - "{{ import_src_paths.results }}"
@@ -46,7 +64,11 @@
       dest: /home/{{ remote_web_user }}/www/{{ item.name }}/wp-config.php
       regexp: '(table_prefix = .)wp_(.;)'
       replace: '\1{{ item.wp.db_import.db_prefix | default("wp_") }}\2'
-    when: item.wp.db-import is defined and item.wp.db_import.path
+    when: >
+      item.wp.db_import is defined
+      and item.wp.db_import.path
+      and (("all" in domains_to_use and "none" in domains_to_skip) or item.name in domains_to_use)
+      and item.name not in domains_to_skip
     with_items:
       - "{{ domains }}"
 
@@ -54,7 +76,12 @@
     command: wp search-replace '{{ item.wp.db_import.search_replace_domain }}' '{{ item.scheme | default('http://' }}{{ item.name }}'
     args:
       chdir: /home/{{ remote_web_user }}/www/{{ item.name }}
-    when: item.wp.db_import.search_replace_domain is defined  and item.wp.db_import.search_replace_domain != item.name
+    when: >
+      item.wp.db_import is defined
+      and item.wp.db_import.search_replace_domain is defined
+      and item.wp.db_import.search_replace_domain != item.name
+      and (("all" in domains_to_use and "none" in domains_to_skip) or item.name in domains_to_use)
+      and item.name not in domains_to_skip
     with_items:
       - "{{ domains }}"
 
@@ -62,7 +89,11 @@
     command: wp search-replace '{{ item.wp.db_import.search_replace_path }}' '/home/{{ remote_web_user }}/www/{{ item.name }}'
     args:
       chdir: /home/{{ remote_web_user }}/www/{{ item.name }}
-    when: item.wp.db_import.search_replace_path is defined
+    when: >
+      item.wp.db_import is defined
+      and item.wp.db_import.search_replace_path is defined
+      and (("all" in domains_to_use and "none" in domains_to_skip) or item.name in domains_to_use)
+      and item.name not in domains_to_skip
     with_items:
       - "{{ domains }}"
 

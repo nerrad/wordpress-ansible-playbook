@@ -8,6 +8,11 @@
     stat:
       path: /home/{{ remote_web_user }}/{{ item.git_deploy.hubdirectory }}/hooks/post-update
     register: hubsetup
+    when: >
+      (("all" in domains_to_use and "none" in domains_to_skip) or item.name in domains_to_use)
+      and item.name not in domains_to_skip
+      and item.git_deploy is defined
+      and item.git_deploy.hubdirectory is defined
     with_items:
       - "{{ domains }}"
 
@@ -15,7 +20,12 @@
     file:
       path: /home/{{ remote_web_user }}/{{ item.0.git_deploy.hubdirectory }}
       state: directory
-    when: '"/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path and not item.1.stat.exists'
+    when: >
+      (item.1.skipped is undefined or not item.1.skipped)
+      and "/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path
+      and not item.1.stat.exists
+      and item.0.git_deploy is defined
+      and item.0.git_deploy.hubdirectory is defined
     with_nested:
       - "{{ domains }}"
       - "{{ hubsetup.results }}"
@@ -24,7 +34,12 @@
     command: git init --bare
     args:
       chdir: /home/{{ remote_web_user }}/{{ item.0.git_deploy.hubdirectory }}
-    when: '"/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path and not item.1.stat.exists'
+    when: >
+      (item.1.skipped is undefined or not item.1.skipped)
+      and "/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path
+      and not item.1.stat.exists
+      and item.0.git_deploy is defined
+      and item.0.git_deploy.hubdirectory is defined
     with_nested:
       - "{{ domains }}"
       - "{{ hubsetup.results }}"
@@ -34,7 +49,12 @@
       src: full-post-update-hub.j2
       dest: /home/{{ remote_web_user }}/{{ item.0.git_deploy.hubdirectory }}/hooks/post-update
       mode: 0755
-    when: '"/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path and not item.1.stat.exists'
+    when: >
+      (item.1.skipped is undefined or not item.1.skipped)
+      and "/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path
+      and not item.1.stat.exists
+      and item.0.git_deploy is defined
+      and item.0.git_deploy.hubdirectory is defined
     with_nested:
       - "{{ domains }}"
       - "{{ hubsetup.results }}"
@@ -45,7 +65,12 @@
       dest: /home/{{ remote_web_user }}/{{ item.0.git_deploy.hubdirectory }}/hooks/post-update
       marker: "# --- {mark} ANSIBLE INSERTED BLOCK ---"
       insertbefore: exec git-update-server-info
-    when: '"/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path and not item.1.stat.exists'
+    when: >
+      (item.1.skipped is undefined or not item.1.skipped)
+      and "/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path
+      and not item.1.stat.exists
+      and item.0.git_deploy is defined
+      and item.0.git_deploy.hubdirectory is defined
     with_nested:
       - "{{ domains }}"
       - "{{ hubsetup.results }}"
@@ -58,21 +83,34 @@
     register: remote_set
     with_items:
       - "{{ domains }}"
+    when: >
+      (("all" in domains_to_use and "none" in domains_to_skip) or item.name in domains_to_use)
+      and item.name not in domains_to_skip
+      and item.git_deploy is defined
+      and item.git_deploy.hubdirectory is defined
 
   - name: Delete wp-content folder
     file:
       path: /home/{{ remote_web_user }}/www/{{ item.0.name }}/wp-content
       state: absent
-    when: '"/home/"+remote_web_user+"/www/"+item.0.name+"/wp-content" == item.1.invocation.module_args.chdir and item.1.rc != 0'
     with_nested:
       - "{{ domains }}"
       - "{{ remote_set.results }}"
+    when: >
+      (item.1.skipped is undefined or not item.1.skipped)
+      and item.0.name == item.1.item.name
+      and item.1.rc != 0
+      and item.0.git_deploy is defined
 
   - name: Recreate blank wp-content folder
     file:
       path: /home/{{ remote_web_user }}/www/{{ item.0.name }}/wp-content
       state: directory
-    when: '"/home/"+remote_web_user+"/www/"+item.0.name+"/wp-content" == item.1.invocation.module_args.chdir and item.1.rc != 0'
+    when: >
+      (item.1.skipped is undefined or not item.1.skipped)
+      and item.0.name == item.1.item.name
+      and item.1.rc != 0
+      and item.0.git_deploy is defined
     with_nested:
       - "{{ domains }}"
       - "{{ remote_set.results }}"
@@ -81,7 +119,12 @@
     command: git clone -o {{ item.0.git_deploy.hubdirectory }} /home/{{ remote_web_user }}/{{ item.0.git_deploy.hubdirectory }} wp-content
     args:
       chdir: /home/{{ remote_web_user }}/www/{{ item.0.name }}
-    when: '"/home/"+remote_web_user+"/www/"+item.0.name+"/wp-content" == item.1.invocation.module_args.chdir and item.1.rc != 0'
+    when: >
+      (item.1.skipped is undefined or not item.1.skipped)
+      and item.0.name == item.1.item.name
+      and item.1.rc != 0
+      and item.0.git_deploy is defined
+      and item.0.git_deploy.hubdirectory is defined
     with_nested:
       - "{{ domains }}"
       - "{{ remote_set.results }}"
