@@ -90,18 +90,3 @@ domains:
     git_deploy:
       hubdirectory: hub
       branch_deployed: master
-    # -- custom nginx conf --
-    # If this is present then the nginx configuration for this site will be copied from the provided local paths. This
-    # will override any nginx configuration that would ordinarily get set up for a wp site even if wp directives are
-    # configured.  If you want the letsencrypt role to automatically setup a ssl cert, then the ssl directive for the
-    # domain should be true and there should be a configuration attached to non_ssl property that lets encrypt uses for
-    # the initial cert authorization.
-    custom_nginx_conf:
-      non_ssl: local/path/to/nginx.conf
-      ssl: local/path/to/nginx-ssl.conf
-    # -- custom web root --
-    # If set, ansible will clone the provided repository into the web root for this domain and checkout master branch
-    # (unless another named branch is declared).
-    custom_web_root:
-      repo: git://address_to_repository_to_clone_into_domain_web_root.git
-      branch: master
