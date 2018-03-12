@@ -131,9 +131,8 @@
 
   - name: followup message for domains
     set_fact:
-      post_run_domain_push_reminder: >
-        {{ post_run_domain_push_reminder }}
-        + ['    {{ item.0.name }}: ssh://{{ remote_web_user }}@{{ ansible_default_ipv4.address }}/~/{{ item.0.git_deploy.hubdirectory}}']
+      post_run_domain_push_reminder: "{{ post_run_domain_push_reminder }}
+        + ['    {{ item.0.name }}: ssh://{{ remote_web_user }}@{{ ansible_default_ipv4.address }}/~/{{ item.0.git_deploy.hubdirectory}}']"
     when: >
       (("all" in domains_to_use and "none" in domains_to_skip) or item.name in domains_to_use)
       and item.name not in domains_to_skip
@@ -142,7 +141,8 @@
 
   - name: followup message prefix
     set_fact:
-      post_run_messages: "{{ post_run_messages }} + ['Now you have add the server as a remote and push the first commits for the following sites and domains:']"
+      post_run_messages: "{{ post_run_messages }}
+        + ['Now you have to add the server as a remote and push the first commits for the following sites and domains:']"
     when: post_run_domain_push_reminder|length > 0
 
   become: true
