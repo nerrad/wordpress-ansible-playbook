@@ -1,0 +1,1 @@
+default_buildmachine_map_path: /home/{{ remote_web_user }}/buildmachine/installedReposMap.json

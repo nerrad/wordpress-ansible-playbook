@@ -73,6 +73,8 @@
      role: php-redis
      tags: [redis]
     -
+     role: buildmachine.webhook.listener
+     tags: [buildmachine, webhook]
     -
      role: postrun.message
      tags:

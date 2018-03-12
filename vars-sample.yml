@@ -90,3 +90,32 @@ domains:
     git_deploy:
       hubdirectory: hub
       branch_deployed: master
+# The following variables are for the buildmachine-webhook role.  This role sets up a php webhook listener based off of
+# https://github.com/nerrad/buildmachine-webhook-listener.
+webhook:
+  # What will be the domain for this webhook. The role will configure nginx for this domain (including ssl) so make
+  # sure you have dns pointing to the server before running this role
+  domain: webhook.somedomain.com
+
+  # This represents the repository type that the webhook will listen for.  Current options are github or codebase.  The
+  # variable is optional and defaults to github.
+  repo_type: github
+
+  # This represents email address associated with the user doing git commits from the buildmachine.  The webhook
+  # listener will ignore any head commit notifications from git users with this email.
+  server_git_email: someemail@example.org
+
+  # This is the path on the server where your grunt build machine is configured. If you set up the grunt build-machine
+  # using its role in this playbook (default paths) then you don't need to configure this and just leave it undefined
+  # in your configuration
+  grunt_path: /path/to/grunt/build-machine/on/server
+
+  # This is the path to the source files of the plugins the grunt build-machine executes on.  Again, if you set up the
+  # grunt build-machine using its role in this playbook you don't need to configure this and just leave it undefined
+  # in your configuration
+  grunt_src_path: /path/to/grunt/build-machine/on/server/buildsrc/
+
+  # This is the path to the build-machine installed repositories map json file.   Again, if you set up the
+  # grunt build-machine using its role in this playbook you don't need to configure this and just leave it undefined
+  # in your configuration
+  map_file: /path/to/grunt/build-machine/on/server/installedReposMap.json

@@ -1,0 +1,40 @@
+#######################
+# nonssl nginx.conf for {{ webhook.domain }}
+######################
+
+#unsecured listener
+server {
+    listen      80;
+    listen      [::]:80;
+    server_name     {{ webhook.domain }};
+    root /home/{{ remote_web_user }}/www/{{ webhook.domain }}/public;
+
+    # File to be used as index
+    index index.php;
+
+    #site specific access logs
+    access_log /home/{{ remote_web_user }}/www/{{ webhook.domain }}/logs/access.log;
+    error_log /home/{{ remote_web_user }}/www/{{ webhook.domain }}/logs/error.log;
+
+    # Default server block rules
+    include global/server/defaults.conf;
+
+    # LetsEncrypt acme-challenge
+    location ^~ /.well-known/acme-challenge {
+        root /home/{{ remote_web_user }}/www/letsencrypt;
+        try_files $uri $uri/ =404;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location ~\.php$ {
+        try_files       $uri =404;
+        include         global/fastcgi-params.conf;
+        fastcgi_read_timeout 6000;
+        fastcgi_buffer_size 512k;
+        fastcgi_buffers 4 512k;
+        fastcgi_pass    $upstream;
+    }
+}
