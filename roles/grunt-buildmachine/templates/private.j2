@@ -1,6 +1,6 @@
 {
     {% if buildmachine.parentPluginSlug is defined %}
-    "parentPluginSlug" : "{{ buildmachine.parentPluginSlug }}"
+    "parentPluginSlug" : "{{ buildmachine.parentPluginSlug }}",
     {% endif %}
     "build_creds" : {
         "archiveUser" : "{{ buildmachine.build_creds.archiveUser }}",
