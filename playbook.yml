@@ -76,6 +76,9 @@
      role: buildmachine.webhook.listener
      tags: [buildmachine, webhook]
     -
+     role: grunt-buildmachine
+     tags: [buildmachine, gruntbm]
+    -
      role: postrun.message
      tags:
       - always

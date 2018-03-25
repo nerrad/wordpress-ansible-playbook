@@ -1,0 +1,32 @@
+#######################
+# nonssl nginx.conf for {{ buildmachine.build_creds.archiveDomain }}
+######################
+
+#unsecured listener
+server {
+    listen      80;
+    listen      [::]:80;
+    server_name     {{ buildmachine.build_creds.archiveDomain }};
+    root /home/{{ remote_web_user }}/www/{{ buildmachine.build_creds.archiveDomain }}/public;
+
+    # File to be used as index
+    index index.html;
+
+    #site specific access logs
+    access_log /home/{{ remote_web_user }}/www/{{ webhook.domain }}/logs/access.log;
+    error_log /home/{{ remote_web_user }}/www/{{ webhook.domain }}/logs/error.log;
+
+    # Default server block rules
+    include global/server/defaults.conf;
+
+    # LetsEncrypt acme-challenge
+    location ^~ /.well-known/acme-challenge {
+        root /home/{{ remote_web_user }}/www/letsencrypt;
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.zip$ {
+        auth_basic "Authorization Required";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+    }
+}

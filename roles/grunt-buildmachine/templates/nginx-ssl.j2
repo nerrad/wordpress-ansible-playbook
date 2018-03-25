@@ -1,0 +1,47 @@
+#######################
+# ssl nginx.conf for {{ buildmachine.build_creds.archiveDomain }}
+######################
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name     {{ buildmachine.build_creds.archiveDomain }};
+    root            /home/{{ remote_web_user }}/www/{{ buildmachine.build_creds.archiveDomain }}/public;
+
+    # Paths to certificate files.
+    ssl_certificate /etc/letsencrypt/live/{{ buildmachine.build_creds.archiveDomain }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ buildmachine.build_creds.archiveDomain }}/privkey.pem;
+
+    # File to be used as index
+    index index.html;
+
+    #site specific access logs
+    access_log /home/{{ remote_web_user }}/www/{{ buildmachine.build_creds.archiveDomain }}/logs/access.log;
+    error_log /home/{{ remote_web_user }}/www/{{ buildmachine.build_creds.archiveDomain }}/logs/error.log;
+
+    # Default server block rules
+    include global/server/defaults.conf;
+
+    # SSL rules
+    include global/server/ssl.conf;
+
+    # LetsEncrypt acme-challenge (need to keep for renewals)
+    location ^~ /.well-known/acme-challenge {
+        root /home/{{ remote_web_user }}/www/letsencrypt;
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.zip$ {
+        auth_basic "Authorization Required";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+    }
+}
+
+# Redirect http to https
+server {
+	listen 80;
+	listen [::]:80;
+	server_name {{ buildmachine.build_creds.archiveDomain }};
+
+	return 301 https://{{ buildmachine.build_creds.archiveDomain }}$request_uri;
+}

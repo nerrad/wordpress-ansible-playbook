@@ -1,0 +1,5 @@
+---
+dependencies:
+ - { role: nginx }
+ - { role: geerlingguy.nodejs }
+ - { role: grunt }
