@@ -1,5 +1,4 @@
 <?php
-$repository_type = '{{ webhook.repo_type|default('github') }}';
 $server_git_email = '{{ webhook.server_git_email }}';
 $access_token = '{{ webhook_token.stdout }}';
 $grunt_path = '{{ webhook.grunt_path|default('~/buildmachine') }}';

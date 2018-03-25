@@ -99,10 +99,6 @@ webhook:
   # sure you have dns pointing to the server before running this role
   domain: webhook.somedomain.com
 
-  # This represents the repository type that the webhook will listen for.  Current options are github or codebase.  The
-  # variable is optional and defaults to github.
-  repo_type: github
-
   # This represents email address associated with the user doing git commits from the buildmachine.  The webhook
   # listener will ignore any head commit notifications from git users with this email.
   server_git_email: someemail@example.org
