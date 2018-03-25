@@ -1,0 +1,9 @@
+---
+# Writes a post-run message to the user using the {{ post_install_messages }} variable
+# that can be pushed to by other plays.
+
+- name: Post Run Message Output
+  debug:
+    msg:
+      - "The following output was collected for you during this run:"
+      - "{{ post_run_messages }}"

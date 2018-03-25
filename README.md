@@ -28,6 +28,8 @@ The following roles are in this playbook.
 | geerlingguy.composer | adds composer to the server | composer
 | geerlingguy.redis | adds redis to the server |  redis
 | php-redis | adds the php7.1 module for redis to the server | redis
+| buildmachine.webhook.listener | Sets up the [webhook listener](https://github.com/nerrad/buildmachine-webhook-listener) for the Grunt Buildmachine for WordPress plugins | webhook, buildmachine
+| grunt-buildmachine | Sets up the [Grunt Buildmachine for WordPress Plugins](https://github.com/eventespresso/grunt-wp-plugin-buildmachine) service. | buildmachine, gruntbm
 
 ## Usage
 

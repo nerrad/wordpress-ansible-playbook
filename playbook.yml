@@ -11,6 +11,7 @@
     domains_to_use: "{{ domuse.split(',') }}"
     domskip: "{{ skip_domains | default('none') }}"
     domains_to_skip: "{{ domskip.split(',') }}"
+    post_run_messages: []
   vars_files:
     - vars.yml
   remote_user: "{{ remote_sudo_user }}"
@@ -71,3 +72,13 @@
     -
      role: php-redis
      tags: [redis]
+    -
+     role: buildmachine.webhook.listener
+     tags: [buildmachine, webhook]
+    -
+     role: grunt-buildmachine
+     tags: [buildmachine, gruntbm]
+    -
+     role: postrun.message
+     tags:
+      - always

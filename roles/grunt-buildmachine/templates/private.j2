@@ -1,0 +1,35 @@
+{
+    {% if buildmachine.parentPluginSlug is defined %}
+    "parentPluginSlug" : "{{ buildmachine.parentPluginSlug }}"
+    {% endif %}
+    "build_creds" : {
+        "archiveUser" : "{{ buildmachine.build_creds.archiveUser }}",
+        "archivePass" : "{{ buildmachine.build_creds.archivePass }}",
+        "archiveDomain" : "https://{{ buildmachine.build_creds.archiveDomain }}",
+        "archiveBasePath" : "~/www/{{ buildmachine.build_creds.archiveDomain }}/public/"
+    {% if buildmachine.slack_creds is defined %}
+    },
+    "slack_creds" : {
+        "authToken" : "{{ buildmachine.slack_creds.authToken }}",
+        "botToken" : "{{ buildmachine.slack_creds.botToken }}",
+        "channels" : {
+            "build" : "{{ buildmachine.slack_creds.channels.build }}",
+            "main" : "{{ buildmachine.slack_creds.channels.main }}"
+        }
+    {% endif %}
+    {% if buildmachine.hipchat_creds is defined %}
+    },
+    "hipchat_creds" : {
+        "authToken" : "{{ buildmachine.hipchat_creds.authToken }}",
+        "roomID" : "{{ buildmachine.hipchat_creds.roomID }}"
+    {% endif %}
+    {% if buildmachine.version_meta is defined %}
+    },
+    "version_meta" : {
+        "preRelease" : "{{ buildmachine.version_meta.preRelease }}",
+        "decaf" : "{{ buildmachine.version_meta.decaf }}",
+        "rc" : "{{ buildmachine.version_meta.rc }}",
+        "release" : "{{ buildmachine.version_meta.release }}"
+    {% endif %}
+    }
+}

@@ -1,0 +1,180 @@
+---
+# This role will setup an instance of the Grunt Buildmachine for WordPress plugins
+# including:
+# - nginx configuration for the url providing access to built zips (protected by basic auth)
+# - ssl for the above
+# - install the buildmachine at the root folder of the web user and configured according to parameters provided in
+#   vars.yml
+- name: Create nginx configurations
+  template:
+    src: "{{ item.file }}"
+    dest: /etc/nginx/sites-available/{{ buildmachine.build_creds.archiveDomain }}.{{ item.type }}.conf
+    mode: 0644
+  when: >
+    buildmachine is defined
+    and buildmachine.build_creds is defined
+    and buildmachine.build_creds.archiveDomain is defined
+  with_items:
+    - { file: nginx-nonssl.j2, type: nonssl }
+    - { file: nginx-ssl.j2, type: ssl }
+
+- name: Verify whether ssl_symlink_exists
+  register: buildmachine_ssl_symlink_exists
+  stat:
+    path: /etc/nginx/sites-enabled/{{ buildmachine.build_creds.archiveDomain }}.ssl.conf
+  when: >
+    buildmachine is defined
+    and buildmachine.build_creds is defined
+    and buildmachine.build_creds.archiveDomain is defined
+
+- name: Symlink non-ssl nginx config (but only if ssl configuration symlink doesn't exist)
+  file:
+    src: /etc/nginx/sites-available/{{ buildmachine.build_creds.archiveDomain }}.nonssl.conf
+    dest: /etc/nginx/sites-enabled/{{ buildmachine.build_creds.archiveDomain }}.nonssl.conf
+    state: link
+  notify: restart nginx
+  when: >
+    buildmachine is defined
+    and buildmachine.build_creds is defined
+    and buildmachine.build_creds.archiveDomain is defined
+    and not buildmachine_ssl_symlink_exists.stat.exists
+
+- name: Does .htpasswd file already exist?  If it does don't overwrite it.
+  register: buildmachine_htpasswd_exists
+  stat:
+    path: /etc/nginx/.htpasswd
+
+- name: Generate .htpasswd file for restricting build url to basic auth.
+  shell: |
+    echo -n '{{ buildmachine.build_creds.archiveUser | quote }}:' >> /etc/nginx/.htpasswd
+    echo '{{ buildmachine.build_creds.archivePass | quote }}' | openssl passwd -apr1 -stdin >> /etc/nginx/.htpasswd
+  when: >
+    not buildmachine_htpasswd_exists.stat.exists
+    and buildmachine is defined
+    and buildmachine.build_creds is defined
+    and buildmachine.build_creds.archiveUser is defined
+    and buildmachine.build_creds.archivePass is defined
+
+- block: #switch to web user
+
+  - name: Create directory for buildmachine's build folder
+    file:
+      path: /home/{{ remote_web_user }}/www/{{ buildmachine.build_creds.archiveDomain }}/public
+      state: directory
+    when: >
+      buildmachine is defined
+      and buildmachine.build_creds is defined
+      and buildmachine.build_creds.archiveDomain is defined
+
+  - name: Create directories for nginx logs #check permissions and what user the directories are created with
+    file:
+      path: /home/{{ remote_web_user }}/www/{{ buildmachine.build_creds.archiveDomain }}/logs
+      state: directory
+    when: >
+      buildmachine is defined
+      and buildmachine.build_creds is defined
+      and buildmachine.build_creds.archiveDomain is defined
+
+  - name: Create directory for the buildmachine itself.
+    file:
+      path: /home/{{ remote_web_user }}/buildmachine
+      state: directory
+    when: >
+      buildmachine is defined
+
+  - name: Does buildmachine repo git checkout already exist?
+    stat:
+      path: /home/{{ remote_web_user }}/buildmachine/.git
+    register: buildmachine_git_exists
+
+  - name: Clone in buildmachine repository
+    git:
+      repo: https://github.com/eventespresso/grunt-wp-plugin-buildmachine.git
+      dest: /home/{{ remote_web_user }}/buildmachine
+      version: master
+      force: yes
+    when: >
+      buildmachine is defined
+      and not buildmachine_git_exists.stat.exists
+
+  - name: Run npm install on buildmachine service
+    npm:
+      path: /home/{{ remote_web_user }}/buildmachine
+    when: >
+      buildmachine is defined
+      and not buildmachine_git_exists.stat.exists
+
+  - name: Setup configuration file for buildmachine service
+    template:
+      src: private.j2
+      dest: /home/{{ remote_web_user }}/buildmachine/private.json
+      mode: 0664
+    when: >
+      buildmachine is defined
+      and buildmachine.build_creds is defined
+      and buildmachine.build_creds.archiveUser is defined
+      and buildmachine.build_creds.archivePass is defined
+      and buildmachine.parentPluginSlug is defined
+
+  become: true
+  become_user: "{{ remote_web_user }}"
+
+- name: create letsencrypt folder for cert verification
+  file:
+    name: /home/{{ remote_web_user }}/www/letsencrypt
+    state: directory
+
+- name: force restart nginx
+  service:
+    name: nginx
+    state: restarted
+  become: yes
+
+- name: Create letsencrypt cert
+  shell: letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ buildmachine.build_creds.archiveDomain }}
+  args:
+    creates: /etc/letsencrypt/live/{{ buildmachine.build_creds.archiveDomain }}
+  notify: restart nginx
+  when: >
+    buildmachine is defined
+    and buildmachine.build_creds is defined
+    and buildmachine.build_creds.archiveDomain is defined
+
+- name: remove symlink for non-ssl
+  file:
+    path: /etc/nginx/sites-enabled/{{ buildmachine.build_creds.archiveDomain }}.nonssl.conf
+    state: absent
+  when: >
+    buildmachine is defined
+    and buildmachine.build_creds is defined
+    and buildmachine.build_creds.archiveDomain is defined
+
+- name: copy symlink for ssl
+  file:
+    src: /etc/nginx/sites-available/{{ buildmachine.build_creds.archiveDomain }}.ssl.conf
+    dest: /etc/nginx/sites-enabled/{{ buildmachine.build_creds.archiveDomain }}.ssl.conf
+    state: link
+  notify: restart nginx
+  when: >
+    buildmachine is defined
+    and buildmachine.build_creds is defined
+    and buildmachine.build_creds.archiveDomain is defined
+
+- name: setup cron job for cert renewal
+  cron:
+    name: letsencrypt_renewal_{{ buildmachine.build_creds.archiveDomain }}
+    special_time: weekly
+    job: letsencrypt --renew certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ buildmachine.build_creds.archiveDomain }} && service nginx reload
+  when: >
+    buildmachine is defined
+    and buildmachine.build_creds is defined
+    and buildmachine.build_creds.archiveDomain is defined
+
+- name: Add message to post_run_messages with webhook.
+  set_fact:
+    post_run_messages: "{{ post_run_messages }}
+      + ['Buildmachine installed and available on the server. Make sure you visit https://github.com/eventespresso/grunt-wp-plugin-buildmachine for instructions on how to finish setting things up.']"
+  when: >
+    buildmachine is defined
+    and buildmachine.build_creds is defined
+    and buildmachine.build_creds.archiveDomain is defined

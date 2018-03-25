@@ -1,0 +1,135 @@
+---
+# This role will setup an instance of the Grunt Buildmachine Webhook Listener
+# including:
+# - nginx configuration
+# - clone to directory
+# - ssl
+# - setup configuration file from provided parameters (see vars-sample.yml)
+# - generate a random string to use as the token for the webhook.
+
+- name: Create nginx configurations
+  template:
+    src: "{{ item.file }}"
+    dest: /etc/nginx/sites-available/{{ webhook.domain }}.{{ item.type }}.conf
+    mode: 0644
+  when: webhook is defined and webhook.domain is defined
+  with_items:
+    - { file: nginx-nonssl.j2, type: nonssl }
+    - { file: nginx-ssl.j2, type: ssl }
+
+- name: Verify whether ssl_symlink_exists
+  register: webhook_ssl_symlink_exists
+  stat:
+    path: /etc/nginx/sites-enabled/{{ webhook.domain }}.ssl.conf
+  when: webhook is defined and webhook.domain is defined
+
+- name: Symlink non-ssl nginx config (but only if ssl configuration symlink doesn't exist)
+  file:
+    src: /etc/nginx/sites-available/{{ webhook.domain }}.nonssl.conf
+    dest: /etc/nginx/sites-enabled/{{ webhook.domain }}.nonssl.conf
+    state: link
+  notify: restart nginx
+  when: >
+    webhook is defined and webhook.domain is defined
+    and not webhook_ssl_symlink_exists.stat.exists
+
+- block: #switch to webuser
+  - name: Generate random string for token key
+    command: php -r "echo md5(random_bytes(10));"
+    register: webhook_token
+    when: webhook is defined and webhook.domain is defined
+
+  - name: Create directory for webhook
+    file:
+      path: /home/{{ remote_web_user }}/www/{{ webhook.domain }}/public
+      state: directory
+    when: webhook is defined and webhook.domain is defined
+
+  - name: Create directories for nginx logs #check permissions and what user the directories are created with
+    file:
+      path: /home/{{ remote_web_user }}/www/{{ webhook.domain }}/logs
+      state: directory
+    when: webhook is defined and webhook.domain is defined
+
+  - name: Does webhook repo git checkout already exist?
+    stat:
+      path: /home/{{ remote_web_user }}/www/{{ webhook.domain }}/public/.git
+    register: webhook_git_exists
+
+  - name: Clone in webhook repository
+    git:
+      repo: https://github.com/nerrad/buildmachine-webhook-listener.git
+      dest: /home/{{ remote_web_user }}/www/{{ webhook.domain }}/public
+      version: master
+      force: yes
+    when: >
+      webhook is defined
+      and webhook.domain is defined
+      and not webhook_git_exists.stat.exists
+
+  - name: Run composer install on webhook service
+    composer:
+      command: install
+      working_dir: /home/{{ remote_web_user }}/www/{{ webhook.domain }}/public
+    when: >
+      webhook is defined
+      and webhook.domain is defined
+      and not webhook_git_exists.stat.exists
+
+  - name: Setup configuration file for webhook service
+    template:
+      src: app-config.j2
+      dest: /home/{{ remote_web_user }}/www/{{ webhook.domain }}/public/app-config.php
+      mode: 0664
+    when: >
+      webhook is defined
+      and webhook.domain is defined
+      and webhook.server_git_email is defined
+
+  become: true
+  become_user: "{{ remote_web_user }}"
+
+- name: create letsencrypt folder for cert verification
+  file:
+    name: /home/{{ remote_web_user }}/www/letsencrypt
+    state: directory
+
+- name: force restart nginx
+  service:
+    name: nginx
+    state: restarted
+  become: yes
+
+- name: Create letsencrypt cert
+  shell: letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ webhook.domain }}
+  args:
+    creates: /etc/letsencrypt/live/{{ webhook.domain }}
+  notify: restart nginx
+  when: webhook is defined and webhook.domain is defined
+
+- name: remove symlink for non-ssl
+  file:
+    path: /etc/nginx/sites-enabled/{{ webhook.domain }}.nonssl.conf
+    state: absent
+  when: webhook is defined and webhook.domain is defined
+
+- name: copy symlink for ssl
+  file:
+    src: /etc/nginx/sites-available/{{ webhook.domain }}.ssl.conf
+    dest: /etc/nginx/sites-enabled/{{ webhook.domain }}.ssl.conf
+    state: link
+  notify: restart nginx
+  when: webhook is defined and webhook.domain is defined
+
+- name: setup cron job for cert renewal
+  cron:
+    name: letsencrypt_renewal_{{ webhook.domain }}
+    special_time: weekly
+    job: letsencrypt --renew certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ webhook.domain }} && service nginx reload
+  when: webhook is defined and webhook.domain is defined
+
+- name: Add message to post_run_messages with webhook.
+  set_fact:
+    post_run_messages: "{{ post_run_messages }}
+      + ['Webhook installed and available at: https://{{ webhook.domain }}/?token={{ webhook_token.stdout }}']"
+  when: webhook is defined and webhook.domain is defined

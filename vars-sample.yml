@@ -90,3 +90,85 @@ domains:
     git_deploy:
       hubdirectory: hub
       branch_deployed: master
+
+# -- Webhook Listener for Grunt Build Machine triggers -- #
+# The following variables are for the buildmachine-webhook role.  This role sets up a php webhook listener based off of
+# https://github.com/nerrad/buildmachine-webhook-listener.
+webhook:
+  # What will be the domain for this webhook. The role will configure nginx for this domain (including ssl) so make
+  # sure you have dns pointing to the server before running this role
+  domain: webhook.somedomain.com
+
+  # This represents the repository type that the webhook will listen for.  Current options are github or codebase.  The
+  # variable is optional and defaults to github.
+  repo_type: github
+
+  # This represents email address associated with the user doing git commits from the buildmachine.  The webhook
+  # listener will ignore any head commit notifications from git users with this email.
+  server_git_email: someemail@example.org
+
+  # This is the path on the server where your grunt build machine is configured. If you set up the grunt build-machine
+  # using its role in this playbook (default paths) then you don't need to configure this and just leave it undefined
+  # in your configuration
+  grunt_path: /path/to/grunt/build-machine/on/server
+
+  # This is the path to the source files of the plugins the grunt build-machine executes on.  Again, if you set up the
+  # grunt build-machine using its role in this playbook you don't need to configure this and just leave it undefined
+  # in your configuration
+  grunt_src_path: /path/to/grunt/build-machine/on/server/buildsrc/
+
+  # This is the path to the build-machine installed repositories map json file.   Again, if you set up the
+  # grunt build-machine using its role in this playbook you don't need to configure this and just leave it undefined
+  # in your configuration
+  map_file: /path/to/grunt/build-machine/on/server/installedReposMap.json
+
+# -- grunt build machine for wordpress --#
+# The following variables are for the grunt-buildmachine role.  This role sets up an install of the "Grunt Build Machine
+# for WordPress Plugins" that is found at the following repository:
+# https://github.com/eventespresso/grunt-wp-plugin-buildmachine
+buildmachine:
+  # required, these are the various details surrounding the build directory where zips will be exposed at after a build.
+  build_creds:
+    # The build directory is protected by htpasswd, this is the htpasswd user.
+    archiveUser: htpasswduserforarchivebuilds
+    # This is what you want the htpasswd password to be for the build director.
+    archivePass: htpasswdpassforarchivebuilds
+    # This is what you want the domain for the build zips to be retrievable from.
+    # This will be setup with an ssl cert by letsencrypt so make sure your domain is pointing to the server this is
+    # setup on.
+    archiveDomain: urlpointingtoyourbuildpath.com
+  # optional.  You can provide credentials for slack notifications on successful build tasks.
+  slack_creds:
+    # This should be a user auth-token (prefixed by xoxp) and it can be generated at this url while logged in on your
+    # slack team: https://api.slack.com/custom-integrations/legacy-tokens
+    authToken: xoxp-xxxxxxxxxxx-xxxxxxxxxxxx-xxxxxxxxxx-xxxxxxxx
+    # Bot tokens are generated via the slack apps interface and are prefixed by xoxb.
+    botToken: xoxb-xxxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxx
+    channels:
+      # This is the channel slug for where you want build notifications going.
+      build: "#buildnotification"
+      # This is the channel you want main notifications going.  Topic will also be changed in this channel for version
+      # bumps when text in the topic matches the following formats (on what is identified as the "parent plugin"):
+      # /REL:*.[0-9]\.[0-9]\.[0-9]+\.p/  -- release version numbers (where "p' is set to denote release versions
+      # /MASTR:*.[0-9]\.[0-9]\.[0-9]+\.rc\.[0-9]{3}/g -- release candidate version numbers (on master branch).
+      main: "#general"
+  # optional. You can provide credentials for hipchat notifications on successful build tasks.
+  hipchat_creds:
+    # go to yourdomain.hipchat.com/admin/api and obtain the authToken from there.
+    authToken: xxxxxxxxxxxxxxxxx
+    # id of the room to receive notifications (this would be where the topic is updates
+    roomID: 00000000
+  # optional. This is the version "indicators" used to represent various version types in the version string of builds. For any
+  # version meta string that you don't want used, just leave as an empty string.
+  version_meta:
+    # 4.2.4.beta
+    preRelease: beta
+    # 4.2.4.decaf - this is the version string used for wp.org releases
+    decaf: decaf
+    # 4.2.4.rc.000
+    rc: rc
+    # 4.2.4.p
+    release: p
+  # optional. This is the slug of the main plugin.  Currently this value is used to determine what builds trigger a topic change
+  # in the connected slack and/or hipchat rooms. If not provided, topics won't be updated in the notification channels.
+  parentPluginSlug: plugin-slug
