@@ -63,12 +63,12 @@
     blockinfile:
       block: "{{ lookup('template', 'partial-post-update.j2') }}"
       dest: /home/{{ remote_web_user }}/{{ item.0.git_deploy.hubdirectory }}/hooks/post-update
-      marker: "# --- {mark} ANSIBLE INSERTED BLOCK ---"
+      marker: "# --- {mark} ANSIBLE INSERTED BLOCK for {{ item.0.name }} ---"
       insertbefore: exec git-update-server-info
     when: >
       (item.1.skipped is undefined or not item.1.skipped)
       and "/home/"+remote_web_user+"/"+item.0.git_deploy.hubdirectory+"/hooks/post-update" == item.1.invocation.module_args.path
-      and not item.1.stat.exists
+      and item.1.stat.exists
       and item.0.git_deploy is defined
       and item.0.git_deploy.hubdirectory is defined
     with_nested:
