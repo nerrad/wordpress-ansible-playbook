@@ -100,6 +100,7 @@
     args:
       chdir: '/home/{{ remote_web_user }}/www/{{ item.name }}'
     register: wp_installed
+    ignore_errors: true
     when: >
       (("all" in domains_to_use and "none" in domains_to_skip) or item.name in domains_to_use)
       and item.name not in domains_to_skip
