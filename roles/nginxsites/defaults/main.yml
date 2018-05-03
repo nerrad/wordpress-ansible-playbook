@@ -7,27 +7,27 @@ nginx_defaults:
   single_wp_site:
     - type: ssl
       src: /etc/nginx/sites-available/ssl.com
-      root_path_regex: '(\s)\/sites\/ssl\.com\/public(;)?$'
+      root_path_regex: '(\s)\/sites\/ssl\.com\/public(;)?'
       domain_regex: '(\s+|/|\.)ssl\.com(\s|/|\$|;)'
     - type: nonssl
       src: /etc/nginx/sites-available/singlesite.com
-      root_path_regex: '(\s)\/sites\/singlesite\.com\/public(;)?$'
+      root_path_regex: '(\s)\/sites\/singlesite\.com\/public(;)?'
       domain_regex: '(\s+|/|\.)singlesite\.com(\s|/|\$|;)'
   subdomain_multi_wp_site:
     - type: nonssl
       src: /etc/nginx/sites-available/multisite-subdomain.com
-      root_path_regex: '(\s)\/sites\/multisite-subdomain\.com\/public(;)?$'
+      root_path_regex: '(\s)\/sites\/multisite-subdomain\.com\/public(;)?'
       domain_regex: '(\s+|/|\.)multisite-subdomain\.com(\s|/|\$|;)'
     - type: ssl
       src: /etc/nginx/sites-available/ssl-multisite-subdomain.com
-      root_path_regex: '(\s)\/sites\/ssl-multisite-subdomain\.com\/public(;)?$'
+      root_path_regex: '(\s)\/sites\/ssl-multisite-subdomain\.com\/public(;)?'
       domain_regex: '(\s+|/|\.)ssl-multisite-subdomain\.com(\s|/|\$|;)'
   subdirectory_multi_wp_site:
     - type: nonssl
       src: /etc/nginx/sites-available/multisite-subdirectory.com
-      root_path_regex: '(\s)\/sites\/multisite-subdirectory\.com\/public(;)?$'
+      root_path_regex: '(\s)\/sites\/multisite-subdirectory\.com\/public(;)?'
       domain_regex: '(\s+|/|\.)multisite-subdirectory\.com(\s|/|\$|;)'
     - type: ssl
       src: /etc/nginx/sites-available/ssl-multisite-subdirectory.com
-      root_path_regex: '(\s)\/sites\/ssl-multisite-subdirectory\.com\/public(;)?$'
+      root_path_regex: '(\s)\/sites\/ssl-multisite-subdirectory\.com\/public(;)?'
       domain_regex: '(\s+|/|\.)ssl-multisite-subdirectory\.com(\s|/|\$|;)'
