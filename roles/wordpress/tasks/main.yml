@@ -100,6 +100,7 @@
     args:
       chdir: '/home/{{ remote_web_user }}/www/{{ item.name }}'
     register: wp_installed
+    ignore_errors: true
     when: >
       (("all" in domains_to_use and "none" in domains_to_skip) or item.name in domains_to_use)
       and item.name not in domains_to_skip
@@ -114,9 +115,25 @@
       (item.1.skipped is undefined or not item.1.skipped)
       and 'Error:' not in item.1.stderr
       and item.1.rc != 0
+      and (item.0.wp.install is undefined or item.0.wp.install == 'singlesite')
     with_together:
      - "{{ domains }}"
      - "{{ wp_installed.results }}"
+
+  - name: Install WordPress Multisite using wp-cli
+    command: wp core multisite-install --url={{ item.0.name|quote }} --title={{ item.0.wp.site_title|quote }} {{ (item.0.wp.network_type is defined and item.0.wp.network_type == 'subdomain') | ternary('--subdomains', '') }} --admin_user={{ item.0.wp.admin_user|quote }} --admin_password={{ item.0.wp.admin_pass|quote }} --admin_email={{ item.0.wp.admin_email|quote }}
+    args:
+      chdir: '/home/{{ remote_web_user }}/www/{{ item.0.name }}'
+    when: >
+      (item.1.skipped is undefined or not item.1.skipped)
+      and 'Error:' not in item.1.stderr
+      and item.1.rc != 0
+      and item.0.wp.install is defined
+      and item.0.wp.install == 'multisite'
+    with_together:
+     - "{{ domains }}"
+     - "{{ wp_installed.results }}"
+
 
   become: true
   become_user: "{{ remote_web_user }}"

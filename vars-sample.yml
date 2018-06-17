@@ -51,6 +51,10 @@ domains:
     scheme: https://
     # if configured then a wp site is setup. Otherwise a plain php based configuration is used
     wp:
+      # Set the WordPress installation type - multisite or singlesite. If not provided defaults to 'singlesite'.
+      install: multisite
+      # WordPress Multisite installation network type. If not provided defaults to 'subdirectory'.
+      network_type: subdomain
       admin_user: username
       # plain_text you can change after site creation
       admin_pass: admin_password
