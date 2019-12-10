@@ -1,8 +1,8 @@
 ---
 # install php redis for php7.1
-- name: "Install php-redis for php7.1"
+- name: "Install php-redis for php{{ php_fpm.version }}"
   apt:
-    name: 'php7.1-redis'
+    name: 'php{{ php_fpm.version }}-redis'
     state: present
     force: yes
     update_cache: yes

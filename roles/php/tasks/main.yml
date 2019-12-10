@@ -5,29 +5,34 @@
 
 - name: Install PHP
   apt:
-    name: "{{ item }}"
+    pkg:
+      - php{{ php_fpm.version }}
+      - php{{ php_fpm.version }}-cli
+      - php{{ php_fpm.version }}-common
+      - php{{ php_fpm.version }}-curl
+      - php{{ php_fpm.version }}-dev
+      - php{{ php_fpm.version }}-fpm
+      - php{{ php_fpm.version }}-gd
+      - php{{ php_fpm.version }}-mbstring
+      - php{{ php_fpm.version }}-mysql
+      - php{{ php_fpm.version }}-opcache
+      - php{{ php_fpm.version }}-xml
+      - php{{ php_fpm.version }}-xmlrpc
+      - php{{ php_fpm.version }}-zip
     state: present
-    force: yes
     update_cache: yes
-  with_items:
-    - php7.1
-    - php7.1-cli
-    - php7.1-common
-    - php7.1-curl
-    - php7.1-dev
-    - php7.1-fpm
-    - php7.1-gd
-    - php7.1-mbstring
-    - php7.1-mcrypt
-    - php7.1-mysql
-    - php7.1-opcache
-    - php7.1-xml
-    - php7.1-xmlrpc
-    - php7.1-zip
+
+- name: Install PHP mcrypt
+  apt:
+    pkg:
+      - php{{ php_fpm.version }}-mcrypt
+    state: present
+    update_cache: yes
+  when: php_fpm.version < 7.2
 
 - name: Set PHP user
   lineinfile:
-    dest: /etc/php/7.1/fpm/pool.d/www.conf
+    dest: /etc/php/{{ php_fpm.version }}/fpm/pool.d/www.conf
     regexp: "^user"
     line: "user = {{ remote_web_user }}"
     state: present
@@ -35,7 +40,7 @@
 
 - name: Set PHP group
   lineinfile:
-    dest: /etc/php/7.1/fpm/pool.d/www.conf
+    dest: /etc/php/{{ php_fpm.version }}/fpm/pool.d/www.conf
     regexp: "^group"
     line: "group = {{ remote_web_user }}"
     state: present
@@ -43,7 +48,7 @@
 
 - name: Set PHP listen owner
   lineinfile:
-    dest: /etc/php/7.1/fpm/pool.d/www.conf
+    dest: /etc/php/{{ php_fpm.version }}/fpm/pool.d/www.conf
     regexp: "^listen\\.owner"
     line: "listen.owner = {{ remote_web_user }}"
     state: present
@@ -51,7 +56,7 @@
 
 - name: Set PHP listen group
   lineinfile:
-    dest: /etc/php/7.1/fpm/pool.d/www.conf
+    dest: /etc/php/{{ php_fpm.version }}/fpm/pool.d/www.conf
     regexp: "^listen\\.group"
     line: "listen.group = {{ remote_web_user }}"
     state: present
@@ -59,7 +64,7 @@
 
 - name: Set PHP upload max filesize
   lineinfile:
-    dest: /etc/php/7.1/fpm/php.ini
+    dest: /etc/php/{{ php_fpm.version }}/fpm/php.ini
     regexp: "^upload_max_filesize"
     line: "upload_max_filesize = 128M"
     state: present
@@ -67,8 +72,24 @@
 
 - name: Set PHP post max filesize
   lineinfile:
-    dest: /etc/php/7.1/fpm/php.ini
+    dest: /etc/php/{{ php_fpm.version }}/fpm/php.ini
     regexp: "^post_max_size"
     line: "post_max_size = 128M"
     state: present
   notify: reload php
+
+- name: Create a PHP upstrem for NGINX
+  copy:
+    dest: /etc/nginx/upstreams/php{{ php_fpm.version }}.conf
+    content: |
+      upstream php{{ php_fpm.version }} {
+          server unix:/run/php/php{{ php_fpm.version }}-fpm.sock;
+      }
+  notify: restart nginx
+
+- name: Set the PHP upstrem for NGINX
+  replace:
+    path: /etc/nginx/global/php-pool.conf
+    regexp: 'default php([0-9]+\.?)+'
+    replace: "default php{{ php_fpm.version }}"
+  notify: restart nginx
