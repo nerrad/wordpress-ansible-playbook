@@ -1,6 +1,6 @@
 # WordPress Ansible Playbook 
 
-This repository contains an ansible playbook for provisioning a WordPress based server with both a production and staging website, optional ssl certificates (provided free via letsencrypt), PHP 7.1, Mariadb, wp-cli, and nginx.
+This repository contains an ansible playbook for provisioning a WordPress based server with both a production and staging website, optional ssl certificates (provided free via letsencrypt), PHP 7.3, Mariadb, wp-cli, and nginx.
 
 > Note: currently this is oriented towards a Ubuntu or Debian based box.
 
@@ -15,7 +15,7 @@ The following roles are in this playbook.
 | ssh |  Disables root login and password authentication for ssh (hardening) | init |
 | nginx | Clones nginx config from the provided repository and configures default settings (including ssl global settings, catchall logs, and the default catchall config) | web, nginx |
 |nginxsites | Configures the nginx conf files for the registered domains. While this role does setup both ssl and non-ssl configs for the provided domain(s), it only _activates_ the non-ssl config.  | nginx, web, sites      |
-| php | Installs PHP 7.1 and all necessary php extensions WordPress needs.  Also modifies the php configs to set the web user etc. | init |
+| php | Installs PHP 7.3 (by default) and all necessary php extensions WordPress needs.  Also modifies the php configs to set the web user etc. | init |
 | mariadb | Installs `mariadb-server` and `python-mysqldb`, sets up root password for all root accounts (generated server side), creates .my.cnf with root password creds (to `/root/.my.cnf` on the server), deletes anonymous mysql server user for server hostname and for local host and removes the mysql test database. | init |
 | wp-cli | Installs wp-cli | init
 | wordpress | Installs and sets up wp sites for given domains.  You will end up with working vanilla WordPress sites for those domains on the server | web, wordpress |
@@ -27,7 +27,7 @@ The following roles are in this playbook.
 | grunt | adds grunt-cli to the server. | grunt
 | geerlingguy.composer | adds composer to the server | composer
 | geerlingguy.redis | adds redis to the server |  redis
-| php-redis | adds the php7.1 module for redis to the server | redis
+| php-redis | adds the php7.3 module for redis to the server | redis
 | buildmachine.webhook.listener | Sets up the [webhook listener](https://github.com/nerrad/buildmachine-webhook-listener) for the Grunt Buildmachine for WordPress plugins | webhook, buildmachine
 | grunt-buildmachine | Sets up the [Grunt Buildmachine for WordPress Plugins](https://github.com/eventespresso/grunt-wp-plugin-buildmachine) service. | buildmachine, gruntbm
 
@@ -86,6 +86,11 @@ Of course if _do_ have the server publicly accessible for your given domains and
 
 ```
 ansible-playbook playbook.yml
+```
+
+You can also update or downgrade the PHP version by setting the `php_fpm.version` variable in your `vars.yml` and running just the `init` tag:
+```
+ansible-playbook playbook.yml --tags="init"
 ```
 
 So you can see with the tags, there's many options for how you use this playbook!

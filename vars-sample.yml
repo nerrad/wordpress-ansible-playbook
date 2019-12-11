@@ -14,6 +14,11 @@ remote_web_user_password: "EncryptedSecretString"
 # created.  The default is usually sufficient if you've already got keys generated in the default location.
 web_user_ssh_public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
+## -- PHP configuration -- ##
+php_fpm:
+  # PHP version to install. Defaults to PHP 7.3.
+  version: 7.2
+
 ## -- nginx configuration -- ##
 nginx:
   # repository used for the main nginx configuration folder. Currently the nginx role is DEPENDENT on this repository.
