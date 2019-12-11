@@ -78,7 +78,7 @@
     state: present
   notify: reload php
 
-- name: Create a PHP upstrem for NGINX
+- name: Create a PHP upstream for NGINX
   copy:
     dest: /etc/nginx/upstreams/php{{ php_fpm.version }}.conf
     content: |
@@ -87,7 +87,7 @@
       }
   notify: restart nginx
 
-- name: Set the PHP upstrem for NGINX
+- name: Set the PHP upstream for NGINX
   replace:
     path: /etc/nginx/global/php-pool.conf
     regexp: 'default php([0-9]+\.?)+'
