@@ -125,7 +125,7 @@
   cron:
     name: letsencrypt_renewal_{{ webhook.domain }}
     special_time: weekly
-    job: (letsencrypt --renew certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ webhook.domain }} && service nginx restart) 2>&1 | logger -t letsencrypt_renewal
+    job: (letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ webhook.domain }} && service nginx restart) 2>&1 | logger -t letsencrypt_renewal
   when: webhook is defined and webhook.domain is defined
 
 - name: Add message to post_run_messages with webhook.

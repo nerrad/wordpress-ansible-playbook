@@ -164,7 +164,7 @@
   cron:
     name: letsencrypt_renewal_{{ buildmachine.build_creds.archiveDomain }}
     special_time: weekly
-    job: (letsencrypt --renew certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ buildmachine.build_creds.archiveDomain }} && service nginx restart) 2>&1 | logger -t letsencrypt_renewal
+    job: (letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ buildmachine.build_creds.archiveDomain }} && service nginx restart) 2>&1 | logger -t letsencrypt_renewal
   when: >
     buildmachine is defined
     and buildmachine.build_creds is defined
