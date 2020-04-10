@@ -47,7 +47,7 @@
   cron:
     name: letsencrypt_renewal_{{ item.name }}
     special_time: weekly
-    job: (letsencrypt --renew certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ item.name }} && service nginx restart) 2>&1 | logger -t letsencrypt_renewal
+    job: (letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ item.name }} && service nginx restart) 2>&1 | logger -t letsencrypt_renewal
   when: >
     (("all" in domains_to_use and "none" in domains_to_skip) or item.name in domains_to_use)
     and item.name not in domains_to_skip
