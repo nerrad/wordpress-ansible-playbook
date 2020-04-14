@@ -20,7 +20,7 @@ The following roles are in this playbook.
 | wp-cli | Installs wp-cli | init
 | wordpress | Installs and sets up wp sites for given domains.  You will end up with working vanilla WordPress sites for those domains on the server | web, wordpress |
 | letsencrypt | This will create, authorize, retrieve and setup ssl certificate for the given domain(s) using the letsencrypt service.  It will deactivate the nonssl nginx configuration for the domain and activate the ssl configuration.  It will also setup a cron job for automatically renewing the certificate(s). | web, ssl |
-| importdb | This will import a mysql database export into designated site dataabases as defined in the `wp_db_import` variable found in your `vars.yml` file (see variables section below for more info) | web, wordpress, import
+| importdb | This will import a mysql database export into designated site databases as defined in the `wp_db_import` variable found in your `vars.yml` file (see variables section below for more info) | web, wordpress, import
 | gitdeploy | Set's up a git deploy system on the server for pushing changes to your site(s) via git. Utilizes the `gitdeploy` variable defined in your `vars.yml` file with domains registered to use it. [Read more details here.](roles/gitdeploy/README.md) | deploy 
 | logentries | This will setup the log entries service and follow any logs that you've already defined. | logentries
 | geerlingguy.node | adds nodejs to the server | node
