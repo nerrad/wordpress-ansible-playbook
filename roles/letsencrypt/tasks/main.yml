@@ -11,7 +11,7 @@
   become: yes
 
 - name: Create letsencrypt certificate
-  shell: letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ item.name }}
+  shell: certbot certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ item.name }}
   args:
     creates: /etc/letsencrypt/live/{{ item.name }}
   notify: restart nginx
@@ -47,7 +47,7 @@
   cron:
     name: letsencrypt_renewal_{{ item.name }}
     special_time: weekly
-    job: (letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ item.name }} && service nginx restart) 2>&1 | logger -t letsencrypt_renewal
+    job: (certbot certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ item.name }} --post-hook "service nginx restart") 2>&1 | logger -t letsencrypt_renewal
   when: >
     (("all" in domains_to_use and "none" in domains_to_skip) or item.name in domains_to_use)
     and item.name not in domains_to_skip

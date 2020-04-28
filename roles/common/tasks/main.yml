@@ -1,7 +1,7 @@
 ---
 - name: Upgrade packages
   apt: upgrade=dist
-  
+
 - name: Install packages
   apt:
     name: "{{ item }}"
@@ -14,3 +14,4 @@
   - unzip
   - python-pip
   - python-dev
+  - python-mysqldb

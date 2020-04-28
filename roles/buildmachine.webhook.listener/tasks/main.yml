@@ -101,7 +101,7 @@
   become: yes
 
 - name: Create letsencrypt cert
-  shell: letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ webhook.domain }}
+  shell: certbot certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ webhook.domain }}
   args:
     creates: /etc/letsencrypt/live/{{ webhook.domain }}
   notify: restart nginx
@@ -125,7 +125,7 @@
   cron:
     name: letsencrypt_renewal_{{ webhook.domain }}
     special_time: weekly
-    job: (letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ webhook.domain }} && service nginx restart) 2>&1 | logger -t letsencrypt_renewal
+    job: (certbot certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ webhook.domain }} --post-hook "service nginx restart") 2>&1 | logger -t letsencrypt_renewal
   when: webhook is defined and webhook.domain is defined
 
 - name: Add message to post_run_messages with webhook.
