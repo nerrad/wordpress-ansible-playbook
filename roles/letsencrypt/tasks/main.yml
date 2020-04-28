@@ -11,7 +11,7 @@
   become: yes
 
 - name: Create letsencrypt certificate
-  shell: letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ item.name }}
+  shell: certbot certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ item.name }}
   args:
     creates: /etc/letsencrypt/live/{{ item.name }}
   notify: restart nginx

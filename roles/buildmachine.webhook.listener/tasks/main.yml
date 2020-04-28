@@ -101,7 +101,7 @@
   become: yes
 
 - name: Create letsencrypt cert
-  shell: letsencrypt certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ webhook.domain }}
+  shell: certbot certonly -n --webroot -w /home/{{ remote_web_user }}/www/letsencrypt -m {{ letsencrypt.email }} --agree-tos -d {{ webhook.domain }}
   args:
     creates: /etc/letsencrypt/live/{{ webhook.domain }}
   notify: restart nginx
