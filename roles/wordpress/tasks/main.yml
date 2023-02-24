@@ -25,7 +25,7 @@
     priv: "{{ item.0.wp.db_name }}.*:ALL"
     host: localhost
     state: present
-    update_password: always
+    update_password: on_create
   when: >
     (item.1.skipped is undefined or not item.1.skipped)
   with_together:
@@ -133,6 +133,7 @@
     with_together:
      - "{{ domains }}"
      - "{{ wp_installed.results }}"
+
 
   become: true
   become_user: "{{ remote_web_user }}"
