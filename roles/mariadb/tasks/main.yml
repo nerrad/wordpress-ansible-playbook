@@ -4,7 +4,7 @@
   apt: name={{item}} state=latest
   with_items:
     - mariadb-server
-    - python-mysqldb
+    - python3-mysqldb
 
 - name: Start MariaDB Service
   service: name=mysql state=started enabled=yes
