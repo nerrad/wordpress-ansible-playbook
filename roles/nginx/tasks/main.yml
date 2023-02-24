@@ -4,10 +4,6 @@
   set_fact:
     nginx_log_format: "{{ lookup('template', 'templates/logformat.j2') }}"
 
-- name: Add Nginx repo
-  apt_repository:
-    repo: ppa:nginx/development
-
 - name: Install Nginx
   apt:
     name: nginx
@@ -48,16 +44,21 @@
 
 - name: Uncomment ssl_dhparam line in configuration
   lineinfile:
-    dest: /etc/nginx/global/server/ssl.conf
+    dest: /etc/nginx/conf.d/ssl-common.conf
     regexp: "^# ssl_dhparam"
     line: "ssl_dhparam /etc/ssl/dhparams.pem;"
     backrefs: yes
     state: present
 
+- name: Make sure the 'nginx/sites-enabled' directory is present
+  file:
+    name: /etc/nginx/sites-enabled
+    state: directory
+
 - name: Symlink default catchall
   file:
-    src: "/etc/nginx/sites-available/default"
-    dest: "/etc/nginx/sites-enabled/default"
+    src: "/etc/nginx/sites-available/default.conf"
+    dest: "/etc/nginx/sites-enabled/default.conf"
     state: link
 
 - name: Add custom log format for le-access log.
