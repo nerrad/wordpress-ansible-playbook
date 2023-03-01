@@ -187,7 +187,7 @@
 - name: Modify access_log path directive for configurations.
   lineinfile:
     dest: "{{ nginx_defaults.file_path}}/{{ item.0.name }}.{{ item.1.type }}.conf"
-    regexp: "access_log"
+    regexp: "(\s{2,})access_log"
     line: "access_log /home/{{ remote_web_user }}/www/{{ item.0.name }}/logs/access.log;"
     state: present
   when: >
@@ -202,7 +202,7 @@
 - name: Modify access_log path directive for configurations. (for a sub-directory multisite install)
   lineinfile:
     dest: "{{ nginx_defaults.file_path}}/{{ item.0.name }}.{{ item.1.type }}.conf"
-    regexp: "access_log"
+    regexp: "(\s{2,})access_log"
     line: "access_log /home/{{ remote_web_user }}/www/{{ item.0.name }}/logs/access.log;"
     state: present
   when: >
@@ -219,7 +219,7 @@
 - name: Modify access_log path directive for configurations. (for a sub-domain multisite install)
   lineinfile:
     dest: "{{ nginx_defaults.file_path}}/{{ item.0.name }}.{{ item.1.type }}.conf"
-    regexp: "access_log"
+    regexp: "(\s{2,})access_log"
     line: "access_log /home/{{ remote_web_user }}/www/{{ item.0.name }}/logs/access.log;"
     state: present
   when: >
@@ -238,7 +238,7 @@
 - name: Modify error_log path directive for all domain
   lineinfile:
     dest: "{{ nginx_defaults.file_path}}/{{ item.0.name }}.{{ item.1.type }}.conf"
-    regexp: "error_log"
+    regexp: "(\s{2,})error_log"
     line: "error_log /home/{{ remote_web_user }}/www/{{ item.0.name }}/logs/error.log;"
     state: present
   when: >
@@ -254,7 +254,7 @@
 - name: Modify error_log path directive for all domain (for a sub-directory multisite install)
   lineinfile:
     dest: "{{ nginx_defaults.file_path}}/{{ item.0.name }}.{{ item.1.type }}.conf"
-    regexp: "error_log"
+    regexp: "(\s{2,})error_log"
     line: "error_log /home/{{ remote_web_user }}/www/{{ item.0.name }}/logs/error.log;"
     state: present
   when: >
@@ -272,7 +272,7 @@
 - name: Modify error_log path directive for all domain (for a sub-domain multisite install)
   lineinfile:
     dest: "{{ nginx_defaults.file_path}}/{{ item.0.name }}.{{ item.1.type }}.conf"
-    regexp: "error_log"
+    regexp: "(\s{2,})error_log"
     line: "error_log /home/{{ remote_web_user }}/www/{{ item.0.name }}/logs/error.log;"
     state: present
   when: >
